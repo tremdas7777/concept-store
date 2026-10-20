@@ -40,6 +40,22 @@ const asOptions = (j: unknown): Opt[] =>
         .map((o) => ({ name: o.name, values: o.values }))
     : [];
 
+const optionsFromVariants = (raw: unknown, variants: { values: string[] }[]): Opt[] => {
+  const saved = asOptions(raw);
+  const count = Math.max(saved.length, ...variants.map((v) => v.values.length), 0);
+  if (!count) return [];
+  return Array.from({ length: count }, (_, i) => {
+    const savedName = saved[i]?.name?.trim();
+    const name =
+      savedName || (count > 1 && i === 0 ? "Cor" : i === 1 ? "Tamanho" : `Opção ${i + 1}`);
+    const values = [
+      ...(saved[i]?.values ?? []),
+      ...variants.map((v) => v.values[i]).filter((v): v is string => !!v),
+    ];
+    return { name, values: [...new Set(values)] };
+  });
+};
+
 async function readDb(): Promise<CatalogData | null> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const cols = await supabaseAdmin
@@ -79,6 +95,16 @@ async function readDb(): Promise<CatalogData | null> {
         : mediaForTitle(p.title).length
           ? mediaForTitle(p.title)
           : (p.images ?? []).filter((url) => !!url && url !== "/placeholder.svg");
+      const variants = [...(p.product_variants ?? [])]
+        .sort((a, b) => a.position - b.position)
+        .map((v) => ({
+          values: v.option_values ?? [],
+          sku: v.sku,
+          price: Number(v.price),
+          compareAtPrice: v.compare_at_price === null ? null : Number(v.compare_at_price),
+          stock: v.stock,
+          image: v.image,
+        }));
       return {
         handle: p.handle,
         title: p.title,
@@ -90,17 +116,8 @@ async function readDb(): Promise<CatalogData | null> {
           .sort((a, b) => a.position - b.position)
           .map((pc) => slugById.get(pc.collection_id))
           .filter((s): s is string => !!s),
-        options: asOptions(p.options),
-        variants: [...(p.product_variants ?? [])]
-          .sort((a, b) => a.position - b.position)
-          .map((v) => ({
-            values: v.option_values ?? [],
-            sku: v.sku,
-            price: Number(v.price),
-            compareAtPrice: v.compare_at_price === null ? null : Number(v.compare_at_price),
-            stock: v.stock,
-            image: v.image,
-          })),
+        options: optionsFromVariants(p.options, variants),
+        variants,
         images,
         sort: p.sort,
         _hasImage: images.length > 0,

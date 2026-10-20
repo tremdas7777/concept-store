@@ -36,7 +36,12 @@ export type ProductOption = { name: string; values: readonly string[] };
 export type Variant = CatalogVariant;
 
 /** Uma vaga do kit: o cliente escolhe uma peça de `pool` e o tamanho dessa peça. */
-export type KitSlot = { label: string; collection: string; pool: readonly BundleId[] };
+export type KitSlot = {
+  label: string;
+  collection: string;
+  pool: readonly BundleId[];
+  virtual?: boolean;
+};
 
 export type Bundle = {
   id: BundleId;
@@ -264,6 +269,123 @@ function productBundle(p: CatalogProduct, collectionName: (slug: string) => stri
   };
 }
 
+const CLOTHING_SIZES = ["PP", "P", "M", "G", "GG", "XG"] as const;
+const BOTTOM_SIZES = ["38", "40", "42", "44", "46", "48"] as const;
+const SHOE_SIZES = ["37", "38", "39", "40", "41", "42", "43", "44"] as const;
+const ACCESSORY_SIZES = ["Único"] as const;
+
+type VirtualPiece = {
+  label: string;
+  sizes: readonly string[];
+  kind: "clothing" | "shoe" | "slide" | "accessory";
+};
+
+const shirt = (label = "Camisa") => ({ label, sizes: CLOTHING_SIZES, kind: "clothing" as const });
+const bottom = (label: "Calça" | "Bermuda" | "Short") => ({
+  label,
+  sizes: label === "Calça" ? BOTTOM_SIZES : CLOTHING_SIZES,
+  kind: "clothing" as const,
+});
+const footwear = (label: "Tênis" | "Slide") => ({
+  label,
+  sizes: SHOE_SIZES,
+  kind: label === "Slide" ? ("slide" as const) : ("shoe" as const),
+});
+const cap = { label: "Boné", sizes: ACCESSORY_SIZES, kind: "accessory" as const };
+
+const legacyPiecePlan: readonly (readonly VirtualPiece[])[] = [
+  [shirt("Camisa polo"), bottom("Calça"), footwear("Tênis"), cap],
+  [shirt("Camisa polo"), bottom("Bermuda"), footwear("Slide")],
+  [shirt("Camisa polo"), bottom("Bermuda"), footwear("Slide"), cap],
+  [shirt("Camisa polo"), bottom("Bermuda"), cap],
+  [shirt("Camisa polo"), bottom("Bermuda"), footwear("Slide")],
+  [shirt(), bottom("Short"), footwear("Slide")],
+  [shirt(), bottom("Short"), footwear("Slide")],
+  [shirt(), bottom("Bermuda"), footwear("Slide")],
+  [shirt(), bottom("Bermuda"), footwear("Slide")],
+  [shirt(), bottom("Bermuda"), footwear("Slide")],
+  [shirt(), bottom("Bermuda"), footwear("Slide")],
+  [shirt(), bottom("Bermuda"), footwear("Tênis")],
+  [shirt(), bottom("Short"), footwear("Slide")],
+  [shirt(), bottom("Bermuda"), footwear("Slide")],
+  [shirt(), bottom("Bermuda"), footwear("Tênis")],
+  [shirt("Camisa polo"), bottom("Short"), footwear("Slide")],
+  [shirt("Camisa polo"), bottom("Short"), footwear("Slide"), cap],
+  [shirt("Camisa polo"), bottom("Short"), footwear("Slide"), cap],
+  [shirt("Camisa polo"), bottom("Short"), footwear("Slide"), cap],
+  [footwear("Slide")],
+];
+
+function virtualPiece(id: string, p: VirtualPiece, image: string): Bundle {
+  return {
+    id,
+    name: p.label,
+    tag: p.kind === "clothing" ? "Tamanho" : p.kind === "accessory" ? "Tamanho único" : "Numeração",
+    price: 0,
+    img: image,
+    images: [image],
+    options: [
+      {
+        name: p.kind === "clothing" || p.kind === "accessory" ? "Tamanho" : "Numeração",
+        values: p.sizes,
+      },
+    ],
+    variants: p.sizes.map((size) => ({
+      values: [size],
+      sku: null,
+      price: 0,
+      compareAtPrice: null,
+      stock: null,
+      image,
+    })),
+    benefits: [],
+    category: "componentes-virtuais",
+    collections: ["componentes-virtuais"],
+    checkoutProductName: p.label,
+    checkoutProductDescription: p.label,
+    checkoutUrl: "#",
+    listed: false,
+  };
+}
+
+function legacyKitBundle(p: CatalogProduct, index: number) {
+  const pieces = legacyPiecePlan[index] ?? legacyPiecePlan[0]!;
+  const virtual = pieces.map((piece, i) =>
+    virtualPiece(`virtual-${p.handle}-${i + 1}`, piece, p.images[0] ?? "/placeholder.svg"),
+  );
+  const slots: KitSlot[] = virtual.map((piece, i) => ({
+    label: pieces[i]!.label,
+    collection: "componentes-virtuais",
+    pool: [piece.id],
+    virtual: true,
+  }));
+  const base = productBundle(p, () => "");
+  return {
+    pieces: virtual,
+    kit: {
+      ...base,
+      options: slots.flatMap((slot, i) => [
+        { name: kitModelOption(i), values: slot.pool },
+        { name: kitSizeOption(i), values: pieces[i]!.sizes },
+      ]),
+      kit: slots,
+      variants: undefined,
+      benefits: [
+        "Você escolhe o tamanho de cada peça",
+        "Cada componente é escolhido separadamente",
+        "A numeração do calçado é independente do tamanho das roupas",
+      ],
+      description: [
+        `Composição deste kit: ${pieces.map((piece) => piece.label).join(" + ")}.`,
+        "Escolha o tamanho de cada roupa e a numeração do calçado quando ele fizer parte do kit.",
+        "As peças virtuais do kit não precisam aparecer como produtos avulsos na loja.",
+      ],
+      checkoutProductName: p.title,
+      checkoutProductDescription: `${p.title}: ${pieces.map((piece) => piece.label).join(" + ")}.`,
+    } satisfies Bundle,
+  };
+}
+
 function kitBundle(k: KitDef, products: readonly Bundle[]): Bundle | null {
   const slots: KitSlot[] = k.slots.map((s) => ({
     label: s.label,
@@ -336,11 +458,10 @@ function build(data: CatalogData): Built {
     .sort((a, b) => a.sort - b.sort)
     .map((p) => productBundle(p, colName));
   const kits = KITS.map((k) => kitBundle(k, products)).filter((b): b is Bundle => !!b);
-  // Mantém os kits antigos baseados nas fotos do Instagram visíveis na loja. Eles não
-  // têm composição de peças cadastrada, então continuam como kits legados de tamanho único;
-  // os kits estruturados acima são os que permitem escolher modelo e tamanho por peça.
-  const legacyKits = INSTAGRAM_KITS.map((p) => productBundle(p, colName));
-  const bundles = [...kits, ...legacyKits, ...products];
+  const legacy = INSTAGRAM_KITS.map((p, index) => legacyKitBundle(p, index));
+  const legacyKits = legacy.map((x) => x.kit);
+  const virtualPieces = legacy.flatMap((x) => x.pieces);
+  const bundles = [...kits, ...legacyKits, ...products, ...virtualPieces];
   const used = new Set(products.flatMap((p) => p.collections));
   const categories: Category[] = [
     ...(kits.length ? [KIT_COLLECTION] : []),
