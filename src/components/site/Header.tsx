@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, Menu, Search, Truck, X } from "lucide-react";
+import { ArrowRight, Menu, Search, Truck, UserRound, X } from "lucide-react";
 import { CartButton, CartDrawer } from "@/components/site/CartDrawer";
 import { Logo } from "@/components/site/Logo";
 import { brand } from "@/lib/brand";
@@ -14,7 +14,7 @@ const help = [
   { href: "/sobre", label: "Sobre a loja" },
 ];
 
-const iconBtn = "grid h-10 w-10 place-items-center text-[var(--ink)] transition hover:opacity-60";
+const iconBtn = "grid h-10 w-10 place-items-center text-white transition hover:opacity-60";
 
 const normalize = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
@@ -105,8 +105,8 @@ function Drawer({ onClose }: { onClose: () => void }) {
         className="flex h-full w-[88%] max-w-sm flex-col overflow-y-auto bg-white animate-in slide-in-from-left duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-3">
-          <Logo size="sm" />
+        <div className="flex items-center justify-between border-b border-white/15 px-5 py-3">
+          <Logo size="sm" tone="light" />
           <button type="button" aria-label="Fechar menu" className={iconBtn} onClick={onClose}>
             <X className="h-5 w-5" />
           </button>
@@ -186,9 +186,18 @@ export function Header() {
   }, [menu, search]);
 
   return (
-    <header className="border-b border-[var(--line)] bg-white">
-      <div className="container-edge grid h-[60px] grid-cols-[1fr_auto_1fr] items-center xl:flex xl:h-[74px] xl:gap-10">
+    <header className="border-b border-white/15 bg-black text-white xl:h-[160px]">
+      <div className="container-edge grid h-[78px] grid-cols-[1fr_auto_1fr] items-center xl:h-[112px] xl:grid-cols-[1fr_auto_1fr]">
         <div className="-ml-2 flex items-center xl:ml-0">
+          <div className="hidden w-[300px] items-center border border-white/40 xl:flex">
+            <input
+              placeholder="Buscar"
+              aria-label="Buscar produtos"
+              onFocus={() => setSearch(true)}
+              className="h-10 w-full bg-transparent px-3 text-[13px] text-white outline-none placeholder:text-white/70"
+            />
+            <Search className="mr-3 h-5 w-5" strokeWidth={1.75} />
+          </div>
           <button
             type="button"
             aria-label="Abrir menu"
@@ -206,15 +215,15 @@ export function Header() {
             <Search className="h-5 w-5" strokeWidth={1.75} />
           </button>
           <Link to="/" aria-label={`${brand.name}: início`} className="hidden xl:block">
-            <Logo />
+            <Logo tone="light" size="lg" />
           </Link>
         </div>
 
         <Link to="/" aria-label={`${brand.name}: início`} className="xl:hidden">
-          <Logo size="sm" />
+          <Logo size="sm" tone="light" />
         </Link>
 
-        <nav className="hidden flex-1 items-center justify-center gap-7 text-[12.5px] font-bold uppercase tracking-[0.1em] xl:flex xl:gap-9">
+        <nav className="absolute inset-x-0 top-[112px] z-10 hidden h-[48px] items-center justify-center gap-8 border-t border-white/15 bg-black text-[12px] font-bold uppercase tracking-[0.05em] xl:flex">
           {cats.map((c) => {
             const on = path === `/colecao/${c.id}`;
             return (
@@ -223,9 +232,9 @@ export function Header() {
                 to="/colecao/$id"
                 params={{ id: c.id }}
                 className={cn(
-                  "relative whitespace-nowrap py-2 transition-opacity hover:opacity-60",
-                  c.id === "kits" && "text-[var(--primary)]",
-                  on && "after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-current",
+                  "relative whitespace-nowrap py-2 text-white transition-opacity hover:opacity-60",
+                  on &&
+                    "after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-current",
                 )}
               >
                 {c.name}
@@ -242,6 +251,9 @@ export function Header() {
             onClick={() => setSearch(true)}
           >
             <Search className="h-5 w-5" strokeWidth={1.75} />
+          </button>
+          <button type="button" aria-label="Minha conta" className={`${iconBtn} hidden sm:grid`}>
+            <UserRound className="h-5 w-5" strokeWidth={1.75} />
           </button>
           <a href="/rastreio" aria-label="Rastrear pedido" className={`${iconBtn} hidden sm:grid`}>
             <Truck className="h-5 w-5" strokeWidth={1.75} />

@@ -21,7 +21,7 @@ export function ProductCard({ p, priority = false }: { p: Bundle; priority?: boo
   };
   return (
     <Link to="/produto" search={{ plano: p.id }} className="group block">
-      <div className="relative aspect-[3/4] overflow-hidden bg-[var(--tile)]">
+      <div className="relative aspect-[2/3] overflow-hidden bg-[#f4f4f4]">
         <img
           src={p.img}
           alt={p.name}
@@ -43,7 +43,7 @@ export function ProductCard({ p, priority = false }: { p: Bundle; priority?: boo
         )}
         <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
           {pieces > 0 && (
-            <span className="bg-[var(--primary)] px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white">
+            <span className="bg-black px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white">
               Kit {pieces} peças
             </span>
           )}
@@ -54,7 +54,7 @@ export function ProductCard({ p, priority = false }: { p: Bundle; priority?: boo
           )}
         </div>
         {off > 0 && !p.soldOut && (
-          <span className="absolute right-2 top-2 bg-[var(--ink)] px-2 py-1 text-[10.5px] font-extrabold text-white">
+          <span className="absolute right-2 top-2 bg-white px-2 py-1 text-[10.5px] font-extrabold text-black">
             -{off}%
           </span>
         )}
@@ -69,7 +69,7 @@ export function ProductCard({ p, priority = false }: { p: Bundle; priority?: boo
           {p.name}
         </h3>
         <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2">
-          <span className="text-[15px] font-extrabold text-[var(--ink)]">{brl(p.price)}</span>
+          <span className="text-[15px] font-bold text-[var(--ink)]">{brl(p.price)}</span>
           {p.compareAtPrice && (
             <s className="text-[12.5px] text-[var(--ink)]/45">{brl(p.compareAtPrice)}</s>
           )}

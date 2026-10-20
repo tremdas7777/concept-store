@@ -122,7 +122,7 @@ function Page() {
             Nenhum produto nesta coleção ainda.
           </p>
         ) : (
-          <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-9 md:grid-cols-3 md:gap-x-4 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-2 gap-x-2 gap-y-9 md:grid-cols-3 md:gap-x-3 lg:grid-cols-6">
             {items.map((p, i) => (
               <ProductCard key={p.id} p={p} priority={i < 4} />
             ))}

@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
-import { AnnouncementBar } from "./AnnouncementBar";
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   const chromeRef = useRef<HTMLDivElement>(null);
@@ -29,10 +28,9 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <div ref={chromeRef} className="fixed top-0 inset-x-0 z-50 flex flex-col">
-        <AnnouncementBar />
         <Header />
       </div>
-      <main className="flex-1" style={{ paddingTop: "var(--site-chrome-h, 7rem)" }}>
+      <main className="flex-1" style={{ paddingTop: "var(--site-chrome-h, 10rem)" }}>
         {children}
       </main>
       <Footer />
