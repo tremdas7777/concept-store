@@ -34,7 +34,7 @@ export const bundleShippingLabel = (b: { price: number }) =>
 export type ProductOption = { name: string; values: readonly string[] };
 export type Variant = CatalogVariant;
 
-/** Uma vaga do kit: o cliente escolhe uma peça de `pool` e a variação dela. */
+/** Uma vaga do kit: o cliente escolhe uma peça de `pool` e o tamanho dessa peça. */
 export type KitSlot = { label: string; collection: string; pool: readonly BundleId[] };
 
 export type Bundle = {
@@ -173,6 +173,24 @@ export const variantKey = (values: readonly string[]) => values.join(" / ");
 
 const inStock = (v: Variant) => v.stock === null || v.stock > 0;
 
+const sizeOptionIndex = (p: Pick<Bundle, "options">) =>
+  p.options.findIndex((o) => /tamanho|size|numera/i.test(o.name));
+
+/**
+ * Valor usado pelo seletor de tamanho de uma peça do kit.
+ * Produtos simples normalmente têm apenas a opção Tamanho. Quando o catálogo também traz
+ * outras opções (por exemplo, Cor), o kit continua guardando a variante completa internamente,
+ * mas exibe e valida o tamanho da peça em vez de misturar "cor / tamanho" no botão.
+ */
+export const variantSize = (p: Pick<Bundle, "options">, v: Pick<Variant, "values">) => {
+  const i = sizeOptionIndex(p);
+  return i >= 0 ? (v.values[i] ?? variantKey(v.values)) : variantKey(v.values) || "Único";
+};
+
+const variantForKitSize = (p: Bundle, size: string | undefined) =>
+  p.variants?.find((v) => variantSize(p, v) === size && inStock(v)) ??
+  p.variants?.find((v) => variantSize(p, v) === size);
+
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
 const paragraphs = (t: string) =>
@@ -195,7 +213,9 @@ function productBundle(p: CatalogProduct, collectionName: (slug: string) => stri
     ? p.variants
     : [{ values: [], sku: null, price: 0, compareAtPrice: null, stock: null, image: null }];
   const sellable = variants.filter(inStock);
-  const base = (sellable.length ? sellable : variants).reduce((a, b) => (b.price < a.price ? b : a));
+  const base = (sellable.length ? sellable : variants).reduce((a, b) =>
+    b.price < a.price ? b : a,
+  );
   const images = [
     ...new Set([...p.images, ...variants.map((v) => v.image).filter((x): x is string => !!x)]),
   ];
@@ -267,12 +287,13 @@ function kitBundle(k: KitDef, products: readonly Bundle[]): Bundle | null {
     img: cover,
     images: [cover, ...pieces.slice(0, 6).map((p) => p.img)],
     options: slots.flatMap((slot, i) => {
-      const keys = new Set<string>();
+      const sizes = new Set<string>();
       for (const id of slot.pool)
-        for (const v of byId.get(id)!.variants ?? []) if (inStock(v)) keys.add(variantKey(v.values));
+        for (const v of byId.get(id)!.variants ?? [])
+          if (inStock(v)) sizes.add(variantSize(byId.get(id)!, v));
       return [
         { name: kitModelOption(i), values: slot.pool },
-        { name: kitSizeOption(i), values: [...keys].sort((a, b) => sizeRank(a) - sizeRank(b)) },
+        { name: kitSizeOption(i), values: [...sizes].sort((a, b) => sizeRank(a) - sizeRank(b)) },
       ];
     }),
     kit: slots,
@@ -305,7 +326,12 @@ type Built = {
 function build(data: CatalogData): Built {
   const cols = [...data.collections].sort((a, b) => a.sort - b.sort);
   const colName = (slug: string) => cols.find((c) => c.slug === slug)?.name ?? "";
-  const products = [...data.products]
+  // Kits exibidos na loja são sempre montados por KITS abaixo. Produtos importados já
+  // classificados apenas como "kits" não têm composição/estoque por peça e acabavam
+  // aparecendo como combinações misturadas, sem permitir tamanho individual.
+  const products = data.products
+    .filter((p) => !p.collections.includes(KIT_COLLECTION.id))
+    .slice()
     .sort((a, b) => a.sort - b.sort)
     .map((p) => productBundle(p, colName));
   const kits = KITS.map((k) => kitBundle(k, products)).filter((b): b is Bundle => !!b);
@@ -418,9 +444,7 @@ export function parseVariant(b: Bundle, raw: string | undefined | null): string[
     const ok = b.kit.every((slot, i) => {
       const piece = findBundle(values[i * 2]);
       return (
-        !!piece &&
-        slot.pool.includes(piece.id) &&
-        !!piece.variants?.some((v) => variantKey(v.values) === values[i * 2 + 1])
+        !!piece && slot.pool.includes(piece.id) && !!variantForKitSize(piece, values[i * 2 + 1])
       );
     });
     return ok ? values : null;
@@ -433,7 +457,7 @@ export function parseVariant(b: Bundle, raw: string | undefined | null): string[
 export function kitChoices(b: Bundle, values: readonly string[]) {
   return (b.kit ?? []).map((slot, i) => {
     const piece = findBundle(values[i * 2]);
-    const variant = piece?.variants?.find((v) => variantKey(v.values) === values[i * 2 + 1]);
+    const variant = piece ? variantForKitSize(piece, values[i * 2 + 1]) : undefined;
     return { slot, piece, variant, size: values[i * 2 + 1] };
   });
 }
@@ -446,7 +470,11 @@ export function variantInStock(b: Bundle, values: readonly string[]) {
 }
 
 /** Valores de uma opção que ainda têm estoque, dado o que já foi escolhido nas outras. */
-export function availableValues(b: Bundle, optionIndex: number, chosen: readonly (string | undefined)[]) {
+export function availableValues(
+  b: Bundle,
+  optionIndex: number,
+  chosen: readonly (string | undefined)[],
+) {
   if (!b.variants?.length) return new Set(b.options[optionIndex]?.values ?? []);
   const out = new Set<string>();
   for (const v of b.variants) {
