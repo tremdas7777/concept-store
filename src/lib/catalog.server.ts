@@ -1,6 +1,7 @@
 import { setCatalogData } from "@/lib/bundles";
 import { CATALOG_MEDIA } from "@/lib/catalog-media";
 import { CATALOG_MEDIA_BY_TITLE } from "@/lib/catalog-media-title";
+import { INSTAGRAM_KITS } from "@/lib/instagram-kits";
 import {
   SEED_CATALOG,
   type CatalogCollection,
@@ -8,19 +9,17 @@ import {
   type CatalogProduct,
 } from "@/lib/catalog-data";
 
-/** Catálogo lido do banco, guardado por alguns segundos (a vitrine não consulta a cada clique). */
 const TTL_MS = 30_000;
 let cache: { at: number; data: CatalogData } | null = null;
 
 const titleKey = (value: string) =>
   value
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\\u0300-\\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
-/** Banco ligado? (.env de exemplo ou sem a chave do servidor = usa o catálogo inicial). */
 export function catalogDbConfigured() {
   const url = process.env["SUPABASE_URL"] ?? "";
   return !!url && !url.includes("seu-projeto-id") && !!process.env["SUPABASE_SERVICE_ROLE_KEY"];
@@ -98,8 +97,6 @@ async function readDb(): Promise<CatalogData | null> {
         stock: v.stock,
         image: v.image,
       })),
-    // O importador antigo pode ter gravado caminhos locais ou `/placeholder.svg`.
-    // Quando existe mídia extraída da loja original, ela é a fonte mais confiável.
     images: CATALOG_MEDIA[p.handle]?.length
       ? CATALOG_MEDIA[p.handle]
       : CATALOG_MEDIA_BY_TITLE[titleKey(p.title)]?.length
@@ -140,7 +137,29 @@ type DbProduct = {
   product_collections: { position: number; collection_id: string }[];
 };
 
-/** Catálogo atual: banco (se tiver produtos) ou o catálogo inicial do código. */
+function withInstagramKits(data: CatalogData): CatalogData {
+  const existing = new Set(data.products.map((p) => p.handle));
+  const kits = INSTAGRAM_KITS.filter((p) => !existing.has(p.handle));
+  const collections = data.collections.some((c) => c.slug === "kits")
+    ? data.collections
+    : [
+        ...data.collections,
+        {
+          slug: "kits",
+          name: "Kits",
+          description: "Combinações selecionadas para comprar junto.",
+          image: kits[0]?.images[0] ?? null,
+          sort: -100,
+        },
+      ];
+  return {
+    ...data,
+    collections,
+    products: [...kits, ...data.products],
+    version: `${data.version ?? data.source}:instagram-kits-v1`,
+  };
+}
+
 export async function loadCatalog(force = false): Promise<CatalogData> {
   if (!force && cache && Date.now() - cache.at < TTL_MS) return cache.data;
   let data: CatalogData = SEED_CATALOG;
@@ -149,20 +168,18 @@ export async function loadCatalog(force = false): Promise<CatalogData> {
       data = (await readDb()) ?? SEED_CATALOG;
     } catch (e) {
       console.error("[catalogo] não consegui ler o banco; usando o catálogo inicial:", e);
-      // Mantém o último catálogo bom em vez de voltar ao inicial por uma falha passageira.
       if (cache) data = cache.data;
     }
   }
-  cache = { at: Date.now(), data };
-  return data;
+  const enriched = withInstagramKits(data);
+  cache = { at: Date.now(), data: enriched };
+  return enriched;
 }
 
-/** Depois de importar/editar produtos: a próxima leitura busca de novo no banco. */
 export function invalidateCatalog() {
   cache = null;
 }
 
-/** Atualiza o catálogo usado pelas funções do servidor (checkout, Pix, cartão). */
 export async function ensureCatalog() {
   setCatalogData(await loadCatalog());
 }
