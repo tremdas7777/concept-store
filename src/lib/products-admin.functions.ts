@@ -367,3 +367,109 @@ export const seedImportProducts = (): ImportProductInput[] =>
     images: p.images,
     collections: p.collections.map((s) => SEED_COLLECTIONS.find((c) => c.slug === s)?.name ?? s),
   }));
+
+/** Produto completo para o editor do admin (mesmo formato do importador). */
+export const getAdminProduct = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({ password: z.string().max(200), handle: z.string().min(1).max(80) }).parse(d),
+  )
+  .handler(async ({ data }): Promise<ImportProductInput | null> => {
+    assertAdmin(data.password);
+    const sb = await db();
+    const { data: p, error } = await sb
+      .from("products")
+      .select(
+        "handle,title,description,product_type,vendor,tags,status,options,images," +
+          "product_variants(position,option_values,sku,price,compare_at_price,stock,image)," +
+          "product_collections(position,collections(name))",
+      )
+      .eq("handle", data.handle)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!p) return null;
+    const row = p as unknown as {
+      handle: string;
+      title: string;
+      description: string;
+      product_type: string | null;
+      vendor: string | null;
+      tags: string[] | null;
+      status: string;
+      options: unknown;
+      images: string[] | null;
+      product_variants: {
+        position: number;
+        option_values: string[] | null;
+        sku: string | null;
+        price: number | string;
+        compare_at_price: number | string | null;
+        stock: number | null;
+        image: string | null;
+      }[];
+      product_collections: { position: number; collections: { name: string } | null }[];
+    };
+    const options = Array.isArray(row.options)
+      ? (row.options as { name?: unknown; values?: unknown }[])
+          .filter((o) => typeof o?.name === "string" && Array.isArray(o.values))
+          .map((o) => ({ name: o.name as string, values: (o.values as unknown[]).map(String) }))
+      : [];
+    return {
+      handle: row.handle,
+      title: row.title,
+      description: row.description,
+      productType: row.product_type,
+      vendor: row.vendor,
+      tags: row.tags ?? [],
+      status: row.status === "active" ? "active" : "draft",
+      options,
+      variants: [...(row.product_variants ?? [])]
+        .sort((a, b) => a.position - b.position)
+        .map((v) => ({
+          values: v.option_values ?? [],
+          sku: v.sku,
+          price: Number(v.price),
+          compareAtPrice: v.compare_at_price === null ? null : Number(v.compare_at_price),
+          stock: v.stock,
+          image: v.image,
+        })),
+      images: row.images ?? [],
+      collections: [...(row.product_collections ?? [])]
+        .sort((a, b) => a.position - b.position)
+        .map((pc) => pc.collections?.name)
+        .filter((n): n is string => !!n),
+    };
+  });
+
+const IMAGE_TYPES = ["image/webp", "image/jpeg", "image/png", "image/avif", "image/gif"] as const;
+
+/**
+ * Envia uma foto do produto para o Supabase Storage (bucket público "produtos") e devolve o
+ * link. O admin já reduz a foto no navegador antes de mandar (máx. ~3 MB aqui).
+ */
+export const uploadProductImage = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        password: z.string().max(200),
+        name: z.string().max(160),
+        contentType: z.enum(IMAGE_TYPES),
+        base64: z.string().min(10).max(4_200_000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const sb = await db();
+    const bytes = Buffer.from(data.base64, "base64");
+    if (bytes.length > 3_000_000) throw new Error("Foto muito grande (máximo 3 MB depois de reduzida).");
+    const ext = data.contentType.split("/")[1] === "jpeg" ? "jpg" : data.contentType.split("/")[1];
+    const now = new Date();
+    const path = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${
+      slugify(data.name.replace(/\.[a-z0-9]+$/i, "")) || "foto"
+    }-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const up = await sb.storage
+      .from("produtos")
+      .upload(path, bytes, { contentType: data.contentType, cacheControl: "31536000", upsert: false });
+    if (up.error) throw new Error(`Não consegui salvar a foto: ${up.error.message}`);
+    return { url: sb.storage.from("produtos").getPublicUrl(path).data.publicUrl };
+  });

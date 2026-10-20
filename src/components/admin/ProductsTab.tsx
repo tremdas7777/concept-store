@@ -9,6 +9,8 @@ import {
   FileUp,
   Loader2,
   PackagePlus,
+  Pencil,
+  Plus,
   RefreshCw,
   Search,
   Trash2,
@@ -40,6 +42,7 @@ import {
   type ParseResult,
 } from "@/lib/shopify-csv";
 import { SEED_COLLECTIONS, SEED_PRODUCTS } from "@/lib/catalog-data";
+import { ProductEditor } from "@/components/admin/ProductEditor";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const CHUNK = 25;
@@ -133,6 +136,8 @@ export function ProductsTab({ password }: { password: string }) {
   );
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  /** Editor aberto: "new" = produto novo; texto = handle do produto. */
+  const [editing, setEditing] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -252,17 +257,38 @@ export function ProductsTab({ password }: { password: string }) {
     failed: results.items.filter((r) => r.status === "error"),
   };
 
+  if (editing)
+    return (
+      <ProductEditor
+        password={password}
+        handle={editing === "new" ? null : editing}
+        collections={catalog?.collections ?? []}
+        onClose={(changed) => {
+          setEditing(null);
+          if (changed) void load();
+        }}
+      />
+    );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">Produtos</h2>
           <p className="text-sm text-muted-foreground">
-            Importe pelo CSV de produtos da Shopify (ou uma planilha com as mesmas colunas).
-            Produtos já cadastrados são atualizados, nunca duplicados.
+            Cadastre à mão ou importe o CSV de produtos da Shopify (ou uma planilha com as mesmas
+            colunas). Produtos já cadastrados são atualizados, nunca duplicados.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            onClick={() => setEditing("new")}
+            disabled={catalog?.configured === false}
+            title={catalog?.configured === false ? "Conecte o banco de dados para cadastrar" : undefined}
+          >
+            <Plus className="mr-1.5 h-4 w-4" /> Adicionar produto
+          </Button>
           <Button variant="outline" size="sm" onClick={() => download("modelo-produtos.csv", templateCsv())}>
             <Download className="mr-1.5 h-4 w-4" /> Baixar CSV modelo
           </Button>
@@ -643,6 +669,15 @@ export function ProductsTab({ password }: { password: string }) {
                         {p.stock === null ? "—" : p.stock === 0 ? <span className="text-red-700">esgotado</span> : p.stock}
                       </td>
                       <td className="whitespace-nowrap p-2 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={busy !== null}
+                          title="Editar"
+                          onClick={() => setEditing(p.handle)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
