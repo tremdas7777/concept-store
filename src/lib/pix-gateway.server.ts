@@ -159,8 +159,9 @@ export async function fetchPixStatus(id: string): Promise<{ status: string; amou
 
 async function pixgateKey(): Promise<string> {
   const key = await getPixgateKey();
-  if (!key) throw new Error("Pagamento indisponível no momento.");
-  return key;
+  const normalized = key?.trim();
+  if (!normalized) throw new Error("Pagamento indisponível no momento.");
+  return normalized;
 }
 
 async function pixgateCashin(o: {
@@ -183,6 +184,8 @@ async function pixgateCashin(o: {
       cpf: o.customer.cpf,
       valor,
       descricao: o.description,
+      email: o.customer.email,
+      telefone: o.customer.phone.replace(/\D/g, ""),
       postback: o.postback,
     }),
   });
@@ -191,8 +194,13 @@ async function pixgateCashin(o: {
   const txId = json?.id;
   const qrcode = json?.pix;
   if (!res.ok || !txId || !qrcode) {
-    console.error("PixGate error", res.status, JSON.stringify(json)?.slice(0, 500));
-    throw new Error("Não foi possível gerar o Pix. Confira seus dados e tente novamente.");
+    const reason = typeof json?.message === "string" ? json.message : typeof json?.error === "string" ? json.error : "resposta inválida";
+    console.error("PixGate error", res.status, reason, JSON.stringify(json)?.slice(0, 500));
+    if (res.status === 401 || res.status === 403)
+      throw new Error("A chave da Pixgate foi recusada ou não tem permissão para gerar Pix.");
+    if (res.status === 400)
+      throw new Error("A Pixgate recusou os dados do pagamento. Confira CPF, valor e dados do cliente.");
+    throw new Error("A Pixgate não conseguiu gerar o Pix agora. Tente novamente em instantes.");
   }
   return {
     id: String(txId),
