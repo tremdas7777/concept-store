@@ -1,5 +1,6 @@
 import { setCatalogData } from "@/lib/bundles";
 import { CATALOG_MEDIA } from "@/lib/catalog-media";
+import { CATALOG_MEDIA_BY_TITLE } from "@/lib/catalog-media-title";
 import {
   SEED_CATALOG,
   type CatalogCollection,
@@ -10,6 +11,14 @@ import {
 /** Catálogo lido do banco, guardado por alguns segundos (a vitrine não consulta a cada clique). */
 const TTL_MS = 30_000;
 let cache: { at: number; data: CatalogData } | null = null;
+
+const titleKey = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 
 /** Banco ligado? (.env de exemplo ou sem a chave do servidor = usa o catálogo inicial). */
 export function catalogDbConfigured() {
@@ -93,7 +102,9 @@ async function readDb(): Promise<CatalogData | null> {
     // Quando existe mídia extraída da loja original, ela é a fonte mais confiável.
     images: CATALOG_MEDIA[p.handle]?.length
       ? CATALOG_MEDIA[p.handle]
-      : (p.images ?? []).filter((url) => !!url && url !== "/placeholder.svg"),
+      : CATALOG_MEDIA_BY_TITLE[titleKey(p.title)]?.length
+        ? CATALOG_MEDIA_BY_TITLE[titleKey(p.title)]
+        : (p.images ?? []).filter((url) => !!url && url !== "/placeholder.svg"),
     sort: p.sort,
   }));
   const stamps = [...rows.map((r) => r.updated_at), ...cols.data.map((c) => c.updated_at)].sort();
