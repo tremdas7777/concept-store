@@ -186,44 +186,60 @@ export function Header() {
   }, [menu, search]);
 
   return (
-    <header className="border-b border-white/15 bg-black text-white xl:h-[160px]">
-      <div className="container-edge grid h-[78px] grid-cols-[1fr_auto_1fr] items-center xl:h-[112px] xl:grid-cols-[1fr_auto_1fr]">
-        <div className="-ml-2 flex items-center xl:ml-0">
-          <div className="hidden w-[300px] items-center border border-white/40 xl:flex">
-            <input
-              placeholder="Buscar"
-              aria-label="Buscar produtos"
-              onFocus={() => setSearch(true)}
-              className="h-10 w-full bg-transparent px-3 text-[13px] text-white outline-none placeholder:text-white/70"
-            />
-            <Search className="mr-3 h-5 w-5" strokeWidth={1.75} />
+    <header className="border-b border-white/15 bg-black text-white">
+      <div className="container-edge py-4 xl:py-5">
+        <div className="grid min-h-[44px] grid-cols-[1fr_auto_1fr] items-center gap-3 xl:min-h-[76px]">
+          <div className="-ml-2 flex min-w-0 items-center gap-1 xl:ml-0">
+            <button
+              type="button"
+              aria-label="Abrir menu"
+              className={`${iconBtn} xl:hidden`}
+              onClick={() => setMenu(true)}
+            >
+              <Menu className="h-[22px] w-[22px]" strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
+              aria-label="Buscar"
+              className={`${iconBtn} xl:hidden`}
+              onClick={() => setSearch(true)}
+            >
+              <Search className="h-5 w-5" strokeWidth={1.75} />
+            </button>
+            <label className="group hidden w-full max-w-[270px] items-center gap-2 rounded-full border border-white/35 px-4 transition-colors hover:border-white xl:flex">
+              <Search className="h-4 w-4 shrink-0 text-white/65" strokeWidth={1.75} />
+              <input
+                placeholder="Buscar produtos"
+                aria-label="Buscar produtos"
+                onFocus={() => setSearch(true)}
+                className="h-10 min-w-0 flex-1 bg-transparent text-[13px] text-white outline-none placeholder:text-white/60"
+              />
+            </label>
           </div>
-          <button
-            type="button"
-            aria-label="Abrir menu"
-            className={`${iconBtn} xl:hidden`}
-            onClick={() => setMenu(true)}
-          >
-            <Menu className="h-[22px] w-[22px]" strokeWidth={1.75} />
-          </button>
-          <button
-            type="button"
-            aria-label="Buscar"
-            className={`${iconBtn} xl:hidden`}
-            onClick={() => setSearch(true)}
-          >
-            <Search className="h-5 w-5" strokeWidth={1.75} />
-          </button>
-          <Link to="/" aria-label={`${brand.name}: início`} className="hidden xl:block">
-            <Logo tone="light" size="lg" />
+
+          <Link to="/" aria-label={`${brand.name}: início`} className="justify-self-center">
+            <Logo tone="light" size="sm" className="xl:[&>span:first-child]:text-[42px]" />
           </Link>
+
+          <div className="-mr-2 flex items-center justify-end">
+            <button type="button" aria-label="Minha conta" className={`${iconBtn} hidden sm:grid`}>
+              <UserRound className="h-5 w-5" strokeWidth={1.75} />
+            </button>
+            <a
+              href="/rastreio"
+              aria-label="Rastrear pedido"
+              className={`${iconBtn} hidden sm:grid`}
+            >
+              <Truck className="h-5 w-5" strokeWidth={1.75} />
+            </a>
+            <CartButton className={iconBtn} />
+          </div>
         </div>
 
-        <Link to="/" aria-label={`${brand.name}: início`} className="xl:hidden">
-          <Logo size="sm" tone="light" />
-        </Link>
-
-        <nav className="absolute inset-x-0 top-[112px] z-10 hidden h-[48px] items-center justify-center gap-8 border-t border-white/15 bg-black text-[12px] font-bold uppercase tracking-[0.05em] xl:flex">
+        <nav
+          aria-label="Categorias"
+          className="mt-4 hidden items-center justify-center gap-8 overflow-x-auto border-t border-white/15 pt-3 text-[12px] font-bold uppercase tracking-[0.05em] xl:flex"
+        >
           {cats.map((c) => {
             const on = path === `/colecao/${c.id}`;
             return (
@@ -242,24 +258,6 @@ export function Header() {
             );
           })}
         </nav>
-
-        <div className="-mr-2 flex items-center justify-end">
-          <button
-            type="button"
-            aria-label="Buscar"
-            className={`${iconBtn} hidden xl:grid`}
-            onClick={() => setSearch(true)}
-          >
-            <Search className="h-5 w-5" strokeWidth={1.75} />
-          </button>
-          <button type="button" aria-label="Minha conta" className={`${iconBtn} hidden sm:grid`}>
-            <UserRound className="h-5 w-5" strokeWidth={1.75} />
-          </button>
-          <a href="/rastreio" aria-label="Rastrear pedido" className={`${iconBtn} hidden sm:grid`}>
-            <Truck className="h-5 w-5" strokeWidth={1.75} />
-          </a>
-          <CartButton className={iconBtn} />
-        </div>
       </div>
       <CartDrawer />
 
