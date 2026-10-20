@@ -89,7 +89,11 @@ async function readDb(): Promise<CatalogData | null> {
         stock: v.stock,
         image: v.image,
       })),
-    images: p.images?.length ? p.images : (CATALOG_MEDIA[p.handle] ?? []),
+    // O importador antigo pode ter gravado caminhos locais ou `/placeholder.svg`.
+    // Quando existe mídia extraída da loja original, ela é a fonte mais confiável.
+    images: CATALOG_MEDIA[p.handle]?.length
+      ? CATALOG_MEDIA[p.handle]
+      : (p.images ?? []).filter((url) => !!url && url !== "/placeholder.svg"),
     sort: p.sort,
   }));
   const stamps = [...rows.map((r) => r.updated_at), ...cols.data.map((c) => c.updated_at)].sort();
