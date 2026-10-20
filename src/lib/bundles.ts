@@ -177,7 +177,8 @@ export const kitSizeOption = (i: number) => `Tamanho ${i + 1}`;
 /** Chave legível de uma variação: "Preto / 42". */
 export const variantKey = (values: readonly string[]) => values.join(" / ");
 
-const inStock = (v: Variant) => v.stock === null || v.stock > 0;
+// A loja trabalha sob encomenda: estoque zero não bloqueia a venda.
+const inStock = (_v: Variant) => true;
 
 const sizeOptionIndex = (p: Pick<Bundle, "options">) =>
   p.options.findIndex((o) => /tamanho|size|numera/i.test(o.name));
@@ -269,9 +270,23 @@ function productBundle(p: CatalogProduct, collectionName: (slug: string) => stri
   };
 }
 
-const CLOTHING_SIZES = ["PP", "P", "M", "G", "GG", "XG"] as const;
-const BOTTOM_SIZES = ["38", "40", "42", "44", "46", "48"] as const;
-const SHOE_SIZES = ["37", "38", "39", "40", "41", "42", "43", "44"] as const;
+const CLOTHING_SIZES = ["PP", "P", "M", "G", "GG", "XG", "XXG", "3G", "4G"] as const;
+const BOTTOM_SIZES = ["36", "38", "40", "42", "44", "46", "48", "50", "52", "54"] as const;
+const SHOE_SIZES = [
+  "34",
+  "35",
+  "36",
+  "37",
+  "38",
+  "39",
+  "40",
+  "41",
+  "42",
+  "43",
+  "44",
+  "45",
+  "46",
+] as const;
 const ACCESSORY_SIZES = ["Único"] as const;
 
 type VirtualPiece = {
@@ -305,8 +320,8 @@ const legacyPiecePlan: readonly (readonly VirtualPiece[])[] = [
   [shirt(), bottom("Bermuda"), footwear("Slide")],
   [shirt(), bottom("Bermuda"), footwear("Slide")],
   [shirt(), bottom("Bermuda"), footwear("Slide")],
+  [shirt(), bottom("Bermuda"), footwear("Slide")],
   [shirt(), bottom("Bermuda"), footwear("Tênis")],
-  [shirt(), bottom("Short"), footwear("Slide")],
   [shirt(), bottom("Bermuda"), footwear("Slide")],
   [shirt(), bottom("Bermuda"), footwear("Tênis")],
   [shirt("Camisa polo"), bottom("Short"), footwear("Slide")],

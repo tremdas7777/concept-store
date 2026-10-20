@@ -62,15 +62,35 @@ const inferredOptions = (p: DbProduct): Opt[] => {
     /camis|camisa|polo|bermuda|short|calça|calca|jaqueta|casaco|conjunto|tricô|trico/.test(text);
   const footwear = /tênis|tenis|slide|chinelo|sapato|mocassim/.test(text);
   if (footwear && !clothing) {
-    return [{ name: "Numeração", values: ["37", "38", "39", "40", "41", "42", "43", "44"] }];
+    return [
+      {
+        name: "Numeração",
+        values: ["34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"],
+      },
+    ];
   }
   if (clothing) {
     const bottom = /calça|calca/.test(text);
     return [
-      { name: "Cor", values: ["Preto", "Branco", "Azul", "Verde", "Vermelho"] },
+      {
+        name: "Cor",
+        values: [
+          "Preto",
+          "Branco",
+          "Azul",
+          "Verde",
+          "Vermelho",
+          "Amarelo",
+          "Rosa",
+          "Marrom",
+          "Cinza",
+        ],
+      },
       {
         name: "Tamanho",
-        values: bottom ? ["38", "40", "42", "44", "46", "48"] : ["PP", "P", "M", "G", "GG", "XG"],
+        values: bottom
+          ? ["36", "38", "40", "42", "44", "46", "48", "50", "52", "54"]
+          : ["PP", "P", "M", "G", "GG", "XG", "XXG", "3G", "4G"],
       },
     ];
   }
