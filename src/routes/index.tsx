@@ -333,7 +333,7 @@ function Faq() {
 }
 
 function Home() {
-  const kits = kitBundles();
+  const kits = kitBundles().filter((p) => p.collections.includes(KIT_COLLECTION.id));
   const shelves = getCategories().filter((c) => c.id !== KIT_COLLECTION.id);
   const [first, ...rest] = shelves;
 
