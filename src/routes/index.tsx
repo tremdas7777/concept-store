@@ -39,24 +39,24 @@ const linkClass = "block h-full w-full";
 const BANNERS: Banner[] = [
   {
     key: "kits",
-    alt: "Monte seu kit: calça, bermuda, alfaiataria e tricô, a partir de 2 peças",
-    mobile: "/banners/hero-kit-m.webp",
-    desktop: "/banners/hero-kit-d.webp",
+    alt: "Monte seu kit com camisa, bermuda, calça, tênis e acessórios",
+    mobile: "/banners/kits-campaign-01-mobile.webp",
+    desktop: "/banners/kits-campaign-01-desktop.webp",
     to: { colecao: "kits" },
   },
   {
-    key: "bermudas",
-    alt: "Bermudas jeans jogador, lisas e destroyed, feitas pro calor",
-    mobile: "/banners/hero-bermudas-m.webp",
-    desktop: "/banners/hero-bermudas-d.webp",
-    to: { colecao: "bermudas" },
+    key: "kits-flatlay",
+    alt: "Escolha cada peça do seu kit e monte o look completo",
+    mobile: "/banners/kits-campaign-02-mobile.webp",
+    desktop: "/banners/kits-campaign-02-desktop.webp",
+    to: { colecao: "kits" },
   },
   {
-    key: "alfaiataria",
-    alt: "Alfaiataria e tricô: o look arrumado sem perder o conforto",
-    mobile: "/banners/hero-alfaiataria-m.webp",
-    desktop: "/banners/hero-alfaiataria-d.webp",
-    to: { colecao: "alfaiataria" },
+    key: "kits-editorial",
+    alt: "Kits masculinos com estilo urbano e peças escolhidas separadamente",
+    mobile: "/banners/kits-campaign-03-mobile.webp",
+    desktop: "/banners/kits-campaign-03-desktop.webp",
+    to: { colecao: "kits" },
   },
 ];
 
