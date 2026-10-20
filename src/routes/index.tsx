@@ -39,24 +39,24 @@ const linkClass = "block h-full w-full";
 const BANNERS: Banner[] = [
   {
     key: "kits",
-    alt: "Monte seu kit com camisa, bermuda, calça, tênis e acessórios",
-    mobile: "/banners/kits-campaign-01-mobile.webp",
-    desktop: "/banners/kits-campaign-01-desktop.webp",
+    alt: "Promoção dos kits: monte seu kit e pague menos",
+    mobile: "/banners/promo-kits-mobile.webp",
+    desktop: "/banners/promo-kits-desktop.webp",
     to: { colecao: "kits" },
   },
   {
-    key: "kits-flatlay",
-    alt: "Escolha cada peça do seu kit e monte o look completo",
-    mobile: "/banners/kits-campaign-02-mobile.webp",
-    desktop: "/banners/kits-campaign-02-desktop.webp",
-    to: { colecao: "kits" },
+    key: "conjuntos",
+    alt: "Conjuntos por R$ 129,90",
+    mobile: "/banners/promo-conjuntos-mobile.webp",
+    desktop: "/banners/promo-conjuntos-desktop.webp",
+    to: { colecao: "conjuntos" },
   },
   {
-    key: "kits-editorial",
-    alt: "Kits masculinos com estilo urbano e peças escolhidas separadamente",
-    mobile: "/banners/kits-campaign-03-mobile.webp",
-    desktop: "/banners/kits-campaign-03-desktop.webp",
-    to: { colecao: "kits" },
+    key: "bones",
+    alt: "Bonés com 40% de desconto",
+    mobile: "/banners/promo-bones-mobile.webp",
+    desktop: "/banners/promo-bones-desktop.webp",
+    to: { colecao: "bones" },
   },
 ];
 
