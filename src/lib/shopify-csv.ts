@@ -160,7 +160,18 @@ const FIELDS = {
   ],
   tracker: ["variant inventory tracker", "inventory tracker"],
   variantImage: ["variant image", "imagem da variacao", "variant image src"],
-  image: ["image src", "image", "imagem", "image url", "url da imagem", "imagem principal"],
+  image: [
+    "image src",
+    "image",
+    "imagem",
+    "images",
+    "imagens",
+    "foto",
+    "fotos",
+    "image url",
+    "url da imagem",
+    "imagem principal",
+  ],
   imagePosition: ["image position", "posicao da imagem"],
   size: ["tamanho", "size"],
   color: ["cor", "color", "colour"],
@@ -199,6 +210,11 @@ const truthy = (s: string) => /^(true|sim|yes|1|verdadeiro|ativo|active)$/i.test
 const falsy = (s: string) => /^(false|nao|não|no|0|falso|inativo|draft|rascunho|archived|arquivado)$/i.test(s.trim());
 
 const isUrl = (s: string) => /^https?:\/\/\S+$/i.test(s) || /^\/[^\s]*$/.test(s);
+const imageUrls = (raw: string) =>
+  raw
+    .split(/\s*(?:\||\n|\r|,)\s*/)
+    .map((value) => value.trim())
+    .filter((value) => value && isUrl(value));
 
 /** Texto da descrição a partir do HTML do CSV (sem tags: a loja nunca injeta HTML do arquivo). */
 export function htmlToText(html: string) {
@@ -419,10 +435,13 @@ export function parseShopifyCsv(text: string, existing: readonly ExistingCollect
     // Foto do produto (linhas só de imagem também entram aqui).
     const image = get(r, "image");
     if (image) {
-      if (isUrl(image)) {
-        const pos = Number(get(r, "imagePosition")) || 1000 + p.imagePositions.length;
-        if (!p.imagePositions.some((x) => x.url === image)) p.imagePositions.push({ url: image, pos });
-      } else
+      const urls = imageUrls(image);
+      const rawPosition = Number(get(r, "imagePosition"));
+      urls.forEach((url, imageIndex) => {
+        const pos = Number.isFinite(rawPosition) && rawPosition > 0 ? rawPosition + imageIndex / 100 : 1000 + p.imagePositions.length;
+        if (!p.imagePositions.some((x) => x.url === url)) p.imagePositions.push({ url, pos });
+      });
+      if (!urls.length)
         issues.push({ row: line, handle, level: "warning", message: `Imagem ignorada (não é um link): ${image.slice(0, 60)}` });
     }
 
@@ -505,7 +524,8 @@ export function parseShopifyCsv(text: string, existing: readonly ExistingCollect
       skus.set(sku.toLowerCase(), handle);
     }
     const vImage = get(r, "variantImage");
-    if (vImage && !isUrl(vImage))
+    const variantImage = imageUrls(vImage)[0] ?? null;
+    if (vImage && !variantImage)
       issues.push({ row: line, handle, level: "warning", message: "Imagem da variação ignorada (não é um link)." });
     p.keys.add(key);
     p.variants.push({
@@ -514,7 +534,7 @@ export function parseShopifyCsv(text: string, existing: readonly ExistingCollect
       price,
       compareAtPrice: typeof compare === "number" && compare > price ? compare : null,
       stock,
-      image: vImage && isUrl(vImage) ? vImage : null,
+      image: variantImage,
     });
   });
 

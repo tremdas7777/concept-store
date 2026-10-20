@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import type { SyntheticEvent } from "react";
 import { usePayInfo } from "@/hooks/usePayInfo";
 import { brl, discountPct, installment, type Bundle } from "@/lib/bundles";
 import { cn } from "@/lib/utils";
@@ -12,12 +13,19 @@ export function ProductCard({ p, priority = false }: { p: Bundle; priority?: boo
   const off = discountPct(p);
   const second = p.images.find((i) => i !== p.img);
   const pieces = p.kit?.length ?? 0;
+  const fallbackImage = (event: SyntheticEvent<HTMLImageElement>) => {
+    const image = event.currentTarget;
+    if (image.dataset.fallbackApplied === "true") return;
+    image.dataset.fallbackApplied = "true";
+    image.src = "/placeholder.svg";
+  };
   return (
     <Link to="/produto" search={{ plano: p.id }} className="group block">
       <div className="relative aspect-[3/4] overflow-hidden bg-[var(--tile)]">
         <img
           src={p.img}
           alt={p.name}
+          onError={fallbackImage}
           loading={priority ? "eager" : "lazy"}
           className={cn(
             "absolute inset-0 h-full w-full object-cover transition duration-700",
@@ -28,6 +36,7 @@ export function ProductCard({ p, priority = false }: { p: Bundle; priority?: boo
           <img
             src={second}
             alt=""
+            onError={fallbackImage}
             loading="lazy"
             className="absolute inset-0 hidden h-full w-full object-cover opacity-0 transition duration-700 md:block md:group-hover:opacity-100"
           />
