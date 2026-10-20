@@ -56,6 +56,49 @@ const optionsFromVariants = (raw: unknown, variants: { values: string[] }[]): Op
   });
 };
 
+const inferredOptions = (p: DbProduct): Opt[] => {
+  const text = `${p.product_type ?? ""} ${p.title}`.toLowerCase();
+  const clothing =
+    /camis|camisa|polo|bermuda|short|calça|calca|jaqueta|casaco|conjunto|tricô|trico/.test(text);
+  const footwear = /tênis|tenis|slide|chinelo|sapato|mocassim/.test(text);
+  if (footwear && !clothing) {
+    return [{ name: "Numeração", values: ["37", "38", "39", "40", "41", "42", "43", "44"] }];
+  }
+  if (clothing) {
+    const bottom = /calça|calca/.test(text);
+    return [
+      { name: "Cor", values: ["Preto", "Branco", "Azul", "Verde", "Vermelho"] },
+      {
+        name: "Tamanho",
+        values: bottom ? ["38", "40", "42", "44", "46", "48"] : ["PP", "P", "M", "G", "GG", "XG"],
+      },
+    ];
+  }
+  return [];
+};
+
+const expandVariants = (
+  variants: CatalogProduct["variants"],
+  options: Opt[],
+): CatalogProduct["variants"] => {
+  if (variants.some((v) => v.values.length) || !options.length) return variants;
+  const base = variants[0] ?? {
+    values: [],
+    sku: null,
+    price: 0,
+    compareAtPrice: null,
+    stock: null,
+    image: null,
+  };
+  return options.reduce<CatalogProduct["variants"]>(
+    (rows, option) =>
+      rows.flatMap((row) =>
+        option.values.map((value) => ({ ...row, values: [...row.values, value] })),
+      ),
+    [{ ...base, values: [] }],
+  );
+};
+
 async function readDb(): Promise<CatalogData | null> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const cols = await supabaseAdmin
@@ -105,6 +148,9 @@ async function readDb(): Promise<CatalogData | null> {
           stock: v.stock,
           image: v.image,
         }));
+      const savedOptions = asOptions(p.options);
+      const options = savedOptions.length ? savedOptions : inferredOptions(p);
+      const normalizedVariants = expandVariants(variants, options);
       return {
         handle: p.handle,
         title: p.title,
@@ -116,8 +162,8 @@ async function readDb(): Promise<CatalogData | null> {
           .sort((a, b) => a.position - b.position)
           .map((pc) => slugById.get(pc.collection_id))
           .filter((s): s is string => !!s),
-        options: optionsFromVariants(p.options, variants),
-        variants,
+        options: optionsFromVariants(options, normalizedVariants),
+        variants: normalizedVariants,
         images,
         sort: p.sort,
         _hasImage: images.length > 0,
