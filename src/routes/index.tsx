@@ -278,7 +278,10 @@ function Perks() {
     { t: "Frete grátis", d: `Acima de R$ ${FREE_SHIPPING_MIN} para todo o Brasil` },
     { t: "Kits com desconto", d: "Quanto mais peças, menor o preço de cada uma" },
     pay.card
-      ? { t: `Até ${pay.installments}x sem juros`, d: `Ou ${Math.round(pay.pixOff * 100)}% de desconto no Pix` }
+      ? {
+          t: `Até ${pay.installments}x sem juros`,
+          d: `Ou ${Math.round(pay.pixOff * 100)}% de desconto no Pix`,
+        }
       : { t: "Pagamento no Pix", d: "Aprovação na hora, pedido separado no mesmo dia" },
     { t: "Troca de tamanho", d: "Não serviu? A gente troca" },
   ];
@@ -341,7 +344,11 @@ function Home() {
 
       {kits.length > 0 && (
         <section className="container-edge pt-14 md:pt-24">
-          <SectionHead title="Kits" kicker="Escolha modelo e tamanho de cada peça" href="/colecao/kits" />
+          <SectionHead
+            title="Kits"
+            kicker="Escolha modelo e tamanho de cada peça"
+            href="/colecao/kits"
+          />
           <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-4 lg:grid-cols-6">
             {kits.map((p, i) => (
               <ProductCard key={p.id} p={p} priority={i < 2} />
@@ -361,8 +368,6 @@ function Home() {
         </section>
       )}
 
-      <KitPromo />
-
       {rest.map((c) => (
         <section key={c.id} className="container-edge pt-14 md:pt-24">
           <SectionHead title={c.name} kicker={c.desc} href={`/colecao/${c.id}`} />
@@ -373,11 +378,6 @@ function Home() {
           </Shelf>
         </section>
       ))}
-
-      <div className="pt-16 md:pt-24">
-        <Perks />
-      </div>
-      <Faq />
     </SiteLayout>
   );
 }

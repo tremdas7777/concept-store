@@ -1,4 +1,5 @@
 import { setCatalogData } from "@/lib/bundles";
+import { CATALOG_MEDIA } from "@/lib/catalog-media";
 import {
   SEED_CATALOG,
   type CatalogCollection,
@@ -88,7 +89,7 @@ async function readDb(): Promise<CatalogData | null> {
         stock: v.stock,
         image: v.image,
       })),
-    images: p.images ?? [],
+    images: p.images?.length ? p.images : (CATALOG_MEDIA[p.handle] ?? []),
     sort: p.sort,
   }));
   const stamps = [...rows.map((r) => r.updated_at), ...cols.data.map((c) => c.updated_at)].sort();

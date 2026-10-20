@@ -109,12 +109,7 @@ export function toCsvRow(cells: readonly (string | number | null | undefined)[])
 /* -------------------------------------------------------------- colunas */
 
 export const normalize = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
+  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
 
 export const slugify = (s: string) =>
   normalize(s)
@@ -127,12 +122,23 @@ const FIELDS = {
   title: ["title", "titulo", "nome", "nome do produto", "produto"],
   body: ["body (html)", "body html", "body", "descricao", "description", "descricao (html)"],
   vendor: ["vendor", "fornecedor", "fabricante", "marca"],
-  productCategory: ["product category", "categoria do produto", "google shopping / google product category"],
+  productCategory: [
+    "product category",
+    "categoria do produto",
+    "google shopping / google product category",
+  ],
   type: ["type", "product type", "tipo", "tipo de produto", "categoria"],
   tags: ["tags", "etiquetas"],
   published: ["published", "publicado"],
   status: ["status", "situacao"],
-  collection: ["collection", "collections", "colecao", "colecoes", "custom collections", "colecao personalizada"],
+  collection: [
+    "collection",
+    "collections",
+    "colecao",
+    "colecoes",
+    "custom collections",
+    "colecao personalizada",
+  ],
   o1n: ["option1 name", "option 1 name", "opcao1 nome", "opcao 1 nome", "opcao1 name"],
   o1v: ["option1 value", "option 1 value", "opcao1 valor", "opcao 1 valor", "opcao1 value"],
   o2n: ["option2 name", "option 2 name", "opcao2 nome", "opcao 2 nome"],
@@ -207,7 +213,8 @@ export function parseMoney(raw: string): number | null | "invalid" {
 }
 
 const truthy = (s: string) => /^(true|sim|yes|1|verdadeiro|ativo|active)$/i.test(s.trim());
-const falsy = (s: string) => /^(false|nao|não|no|0|falso|inativo|draft|rascunho|archived|arquivado)$/i.test(s.trim());
+const falsy = (s: string) =>
+  /^(false|nao|não|no|0|falso|inativo|draft|rascunho|archived|arquivado)$/i.test(s.trim());
 
 const isUrl = (s: string) => /^https?:\/\/\S+$/i.test(s) || /^\/[^\s]*$/.test(s);
 const imageUrls = (raw: string) =>
@@ -248,7 +255,10 @@ const KEYWORDS: readonly [RegExp, string][] = [
   [/\bpolos?\b/, "Polos"],
   [/\bcamisas?\b|\bshirts?\b/, "Camisas"],
   [/\bregatas?\b|\btank\b/, "Regatas"],
-  [/\bmoletons?\b|\bhoodies?\b|\bsweatshirts?\b|\bcasacos?\b|\bjaquetas?\b|\bjackets?\b|\bcorta.?ventos?\b/, "Jaquetas e Casacos"],
+  [
+    /\bmoletons?\b|\bhoodies?\b|\bsweatshirts?\b|\bcasacos?\b|\bjaquetas?\b|\bjackets?\b|\bcorta.?ventos?\b/,
+    "Jaquetas e Casacos",
+  ],
   [/\btenis\b|\bsneakers?\b|\bshoes?\b/, "Tênis"],
   [/\bchinelos?\b|\bslides?\b|\bsandalias?\b|\bsandals?\b/, "Chinelos"],
   [/\bbones?\b|\bcaps?\b|\bhats?\b/, "Bonés"],
@@ -261,7 +271,22 @@ const KEYWORDS: readonly [RegExp, string][] = [
   [/\bcorrentes?\b|\bpulseiras?\b|\baneis\b|\banel\b|\bcolar(es)?\b|\bjewelry\b/, "Acessórios"],
 ];
 
-const STOP = new Set(["de", "da", "do", "das", "dos", "e", "com", "em", "para", "a", "o", "the", "and", "of"]);
+const STOP = new Set([
+  "de",
+  "da",
+  "do",
+  "das",
+  "dos",
+  "e",
+  "com",
+  "em",
+  "para",
+  "a",
+  "o",
+  "the",
+  "and",
+  "of",
+]);
 const tokens = (s: string) =>
   normalize(s)
     .split(/[^a-z0-9]+/)
@@ -291,11 +316,19 @@ export function matchCollection(text: string, existing: readonly ExistingCollect
 }
 
 /** Coleção com o mesmo nome/slug (para não criar duplicada). */
-export const sameCollection = <T extends ExistingCollection>(name: string, existing: readonly T[]) =>
-  existing.find((c) => c.slug === slugify(name) || normalize(c.name) === normalize(name));
+export const sameCollection = <T extends ExistingCollection>(
+  name: string,
+  existing: readonly T[],
+) => existing.find((c) => c.slug === slugify(name) || normalize(c.name) === normalize(name));
 
 function detectCollections(
-  p: { title: string; productType: string | null; tags: string[]; category: string | null; explicit: string[] },
+  p: {
+    title: string;
+    productType: string | null;
+    tags: string[];
+    category: string | null;
+    explicit: string[];
+  },
   existing: readonly ExistingCollection[],
 ): { names: string[]; source: CategorySource } {
   if (p.explicit.length) {
@@ -329,7 +362,10 @@ const MAX_PRODUCTS = 2000;
  * Lê o CSV e agrupa as linhas por produto (Handle), como a Shopify:
  * a 1ª linha do produto traz os dados gerais; as seguintes trazem só variações e/ou fotos.
  */
-export function parseShopifyCsv(text: string, existing: readonly ExistingCollection[] = []): ParseResult {
+export function parseShopifyCsv(
+  text: string,
+  existing: readonly ExistingCollection[] = [],
+): ParseResult {
   const rows = parseCsv(text);
   const issues: CsvIssue[] = [];
   if (rows.length < 2) {
@@ -351,7 +387,11 @@ export function parseShopifyCsv(text: string, existing: readonly ExistingCollect
     return { products: [], issues, rowCount: rows.length - 1, columns: names };
   }
   if (idx.price === undefined)
-    issues.push({ row: 1, level: "error", message: 'Falta a coluna de preço ("Variant Price" ou "Preço").' });
+    issues.push({
+      row: 1,
+      level: "error",
+      message: 'Falta a coluna de preço ("Variant Price" ou "Preço").',
+    });
 
   const get = (r: string[], f: Field) => (idx[f] === undefined ? "" : (r[idx[f]!] ?? "").trim());
 
@@ -373,7 +413,11 @@ export function parseShopifyCsv(text: string, existing: readonly ExistingCollect
     // Sem Handle: linha nova com título = produto novo; sem título = continua o anterior.
     if (!handle) handle = title ? slugify(title) : (last?.handle ?? "");
     if (!handle) {
-      issues.push({ row: line, level: "error", message: "Linha sem Handle e sem Título: ignorada." });
+      issues.push({
+        row: line,
+        level: "error",
+        message: "Linha sem Handle e sem Título: ignorada.",
+      });
       return;
     }
     let p = byHandle.get(handle);
@@ -388,7 +432,11 @@ export function parseShopifyCsv(text: string, existing: readonly ExistingCollect
         return;
       }
       if (byHandle.size >= MAX_PRODUCTS) {
-        issues.push({ row: line, level: "error", message: `Limite de ${MAX_PRODUCTS} produtos por arquivo.` });
+        issues.push({
+          row: line,
+          level: "error",
+          message: `Limite de ${MAX_PRODUCTS} produtos por arquivo.`,
+        });
         return;
       }
       const status = get(r, "status");
@@ -438,11 +486,19 @@ export function parseShopifyCsv(text: string, existing: readonly ExistingCollect
       const urls = imageUrls(image);
       const rawPosition = Number(get(r, "imagePosition"));
       urls.forEach((url, imageIndex) => {
-        const pos = Number.isFinite(rawPosition) && rawPosition > 0 ? rawPosition + imageIndex / 100 : 1000 + p.imagePositions.length;
+        const pos =
+          Number.isFinite(rawPosition) && rawPosition > 0
+            ? rawPosition + imageIndex / 100
+            : 1000 + p.imagePositions.length;
         if (!p.imagePositions.some((x) => x.url === url)) p.imagePositions.push({ url, pos });
       });
       if (!urls.length)
-        issues.push({ row: line, handle, level: "warning", message: `Imagem ignorada (não é um link): ${image.slice(0, 60)}` });
+        issues.push({
+          row: line,
+          handle,
+          level: "warning",
+          message: `Imagem ignorada (não é um link): ${image.slice(0, 60)}`,
+        });
     }
 
     // Variação: linha com valor de opção, preço ou SKU.
@@ -464,13 +520,19 @@ export function parseShopifyCsv(text: string, existing: readonly ExistingCollect
       const v = rawValues[k] ?? "";
       if (!v) {
         bad = true;
-        issues.push({ row: line, handle, level: "error", message: `Variação sem valor para "${n}": ignorada.` });
+        issues.push({
+          row: line,
+          handle,
+          level: "error",
+          message: `Variação sem valor para "${n}": ignorada.`,
+        });
       }
       values.push(v.slice(0, 60));
     });
     if (bad) return;
     // "Title / Default Title" da Shopify = produto sem variação.
-    const isDefault = p.optionNames[0]?.toLowerCase() === "title" && /^default title$/i.test(values[0] ?? "");
+    const isDefault =
+      p.optionNames[0]?.toLowerCase() === "title" && /^default title$/i.test(values[0] ?? "");
     const finalValues = isDefault ? [] : values;
 
     const price = parseMoney(priceRaw);
@@ -479,24 +541,42 @@ export function parseShopifyCsv(text: string, existing: readonly ExistingCollect
         row: line,
         handle,
         level: "error",
-        message: price === null ? "Variação sem preço: ignorada." : `Preço inválido "${priceRaw}": variação ignorada.`,
+        message:
+          price === null
+            ? "Variação sem preço: ignorada."
+            : `Preço inválido "${priceRaw}": variação ignorada.`,
       });
       return;
     }
     const compareRaw = get(r, "compareAt");
     const compare = parseMoney(compareRaw);
     if (compare === "invalid")
-      issues.push({ row: line, handle, level: "warning", message: `Preço "de" inválido "${compareRaw}": ignorado.` });
+      issues.push({
+        row: line,
+        handle,
+        level: "warning",
+        message: `Preço "de" inválido "${compareRaw}": ignorado.`,
+      });
 
     const stockRaw = get(r, "stock");
     let stock: number | null = null;
     if (stockRaw) {
       const n = Number(stockRaw.replace(",", "."));
       if (!Number.isFinite(n)) {
-        issues.push({ row: line, handle, level: "warning", message: `Estoque inválido "${stockRaw}": ficou sem controle de estoque.` });
+        issues.push({
+          row: line,
+          handle,
+          level: "warning",
+          message: `Estoque inválido "${stockRaw}": ficou sem controle de estoque.`,
+        });
       } else if (n < 0) {
         stock = 0;
-        issues.push({ row: line, handle, level: "warning", message: `Estoque negativo (${n}) virou 0.` });
+        issues.push({
+          row: line,
+          handle,
+          level: "warning",
+          message: `Estoque negativo (${n}) virou 0.`,
+        });
       } else stock = Math.floor(n);
     }
 
@@ -526,7 +606,12 @@ export function parseShopifyCsv(text: string, existing: readonly ExistingCollect
     const vImage = get(r, "variantImage");
     const variantImage = imageUrls(vImage)[0] ?? null;
     if (vImage && !variantImage)
-      issues.push({ row: line, handle, level: "warning", message: "Imagem da variação ignorada (não é um link)." });
+      issues.push({
+        row: line,
+        handle,
+        level: "warning",
+        message: "Imagem da variação ignorada (não é um link).",
+      });
     p.keys.add(key);
     p.variants.push({
       values: finalValues,
@@ -541,25 +626,44 @@ export function parseShopifyCsv(text: string, existing: readonly ExistingCollect
   const products: ImportProduct[] = [];
   for (const d of byHandle.values()) {
     if (!d.variants.length) {
-      issues.push({ row: d.row, handle: d.handle, level: "error", message: `"${d.title}" não tem nenhuma variação válida (preço): produto ignorado.` });
+      issues.push({
+        row: d.row,
+        handle: d.handle,
+        level: "error",
+        message: `"${d.title}" não tem nenhuma variação válida (preço): produto ignorado.`,
+      });
       continue;
     }
     const usesOptions = d.variants.some((v) => v.values.length);
     const options = usesOptions
       ? d.optionNames
           .filter(Boolean)
-          .map((name, k) => ({ name: name.slice(0, 40), values: [...new Set(d.variants.map((v) => v.values[k]!))] }))
+          .map((name, k) => ({
+            name: name.slice(0, 40),
+            values: [...new Set(d.variants.map((v) => v.values[k]!))],
+          }))
       : [];
     const images = [
       ...d.imagePositions.sort((a, b) => a.pos - b.pos).map((x) => x.url),
       ...d.variants.map((v) => v.image).filter((x): x is string => !!x),
     ];
     const col = detectCollections(
-      { title: d.title, productType: d.productType, tags: d.tags, category: d.category, explicit: d.explicit },
+      {
+        title: d.title,
+        productType: d.productType,
+        tags: d.tags,
+        category: d.category,
+        explicit: d.explicit,
+      },
       existing,
     );
     if (!images.length)
-      issues.push({ row: d.row, handle: d.handle, level: "warning", message: `"${d.title}" está sem foto.` });
+      issues.push({
+        row: d.row,
+        handle: d.handle,
+        level: "warning",
+        message: `"${d.title}" está sem foto.`,
+      });
     products.push({
       handle: d.handle,
       title: d.title,
@@ -569,7 +673,9 @@ export function parseShopifyCsv(text: string, existing: readonly ExistingCollect
       tags: d.tags,
       status: d.status,
       options,
-      variants: usesOptions ? d.variants : d.variants.slice(0, 1).map((v) => ({ ...v, values: [] })),
+      variants: usesOptions
+        ? d.variants
+        : d.variants.slice(0, 1).map((v) => ({ ...v, values: [] })),
       images: [...new Set(images)].slice(0, 30),
       collections: col.names,
       categorySource: col.source,
