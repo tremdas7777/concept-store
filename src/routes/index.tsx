@@ -126,7 +126,7 @@ function Hero() {
                   alt={b.alt}
                   fetchPriority={i === 0 ? "high" : undefined}
                   loading={i === 0 ? "eager" : "lazy"}
-                  className="h-full w-full object-cover"
+                  className="block h-full w-full max-w-full object-cover"
                 />
               </picture>
             </BannerLink>
