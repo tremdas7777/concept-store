@@ -87,7 +87,9 @@ function Gallery({ p, images }: { p: Bundle; images: readonly string[] }) {
       <div className="relative -mx-4 md:hidden">
         <div
           ref={ref}
-          onScroll={(e) => setI(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
+          onScroll={(e) =>
+            setI(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))
+          }
           className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {images.map((src, k) => (
@@ -112,7 +114,10 @@ function Gallery({ p, images }: { p: Bundle; images: readonly string[] }) {
         {images.map((src, k) => (
           <div
             key={src}
-            className={cn("aspect-[3/4] bg-[var(--tile)]", k === 0 && images.length % 2 === 1 && "col-span-2 aspect-[4/5]")}
+            className={cn(
+              "aspect-[3/4] bg-[var(--tile)]",
+              k === 0 && images.length % 2 === 1 && "col-span-2 aspect-[4/5]",
+            )}
           >
             <img
               src={src}
@@ -157,7 +162,7 @@ function Page() {
 
   // Troca de produto: zera as escolhas (produto de uma opção só com um valor já vem marcado).
   useEffect(() => {
-    setVals(p.options.map((o) => (o.values.length === 1 && !p.kit ? o.values[0] : undefined)));
+    setVals(p.options.map((o) => (o.values.length === 1 ? o.values[0] : undefined)));
     setNudge(false);
   }, [p.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -223,7 +228,9 @@ function Page() {
         : `Escolha ${p.options.find((_, i) => !chosen[i])?.name.toLowerCase() ?? "as opções"}`;
 
   // Peça avulsa que entra num kit: mostra quanto sai no kit.
-  const kitOffer = !p.kit ? kitBundles().find((k) => k.kit?.some((s) => s.pool.includes(p.id))) : undefined;
+  const kitOffer = !p.kit
+    ? kitBundles().find((k) => k.kit?.some((s) => s.pool.includes(p.id)))
+    : undefined;
 
   const related = [
     ...listedBundles().filter((b) => b.id !== p.id && b.category === p.category),
@@ -278,7 +285,11 @@ function Page() {
           <ChevronRight className="h-3.5 w-3.5" />
           {category && (
             <>
-              <Link to="/colecao/$id" params={{ id: category.id }} className="hover:text-[var(--ink)]">
+              <Link
+                to="/colecao/$id"
+                params={{ id: category.id }}
+                className="hover:text-[var(--ink)]"
+              >
                 {category.name}
               </Link>
               <ChevronRight className="h-3.5 w-3.5" />
@@ -331,7 +342,8 @@ function Page() {
               {pay.card ? (
                 <>
                   <p>
-                    ou {pay.installments}x de {installment(priced.price, pay.installments)} sem juros
+                    ou {pay.installments}x de {installment(priced.price, pay.installments)} sem
+                    juros
                   </p>
                   {pay.pixOff > 0 && (
                     <p>
@@ -466,7 +478,11 @@ function Page() {
                 search={{ plano: kitOffer.id }}
                 className="mt-6 flex items-center gap-4 border border-[var(--primary)] p-4 transition hover:bg-[var(--brand-tint)]"
               >
-                <img src={kitOffer.img} alt="" className="h-20 w-16 bg-[var(--tile)] object-cover" />
+                <img
+                  src={kitOffer.img}
+                  alt=""
+                  className="h-20 w-16 bg-[var(--tile)] object-cover"
+                />
                 <span className="flex-1">
                   <span className="block text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--primary)]">
                     Leve no kit
