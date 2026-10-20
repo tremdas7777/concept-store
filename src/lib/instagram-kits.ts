@@ -43,9 +43,6 @@ export const INSTAGRAM_KITS: CatalogProduct[] = posts.map((post, index) => ({
       image: `/instagram-kits/kit-${String(index + 1).padStart(2, "0")}-1.jpg`,
     },
   ],
-  images: [
-    `/instagram-kits/kit-${String(index + 1).padStart(2, "0")}-1.jpg`,
-    `/instagram-kits/kit-${String(index + 1).padStart(2, "0")}-2.jpg`,
-  ],
+  images: [`/instagram-kits/kit-${String(index + 1).padStart(2, "0")}-1.jpg`],
   sort: -1000 + index,
 }));

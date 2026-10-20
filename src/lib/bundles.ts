@@ -385,7 +385,17 @@ export const getCategories = () => built.categories;
 export const defaultBundleId = () => built.bundles[0]?.id ?? "";
 
 export function parseBundleId(raw: string | undefined | null): BundleId | undefined {
-  return raw && built.byId.has(raw) ? raw : undefined;
+  if (!raw) return undefined;
+  if (built.byId.has(raw)) return raw;
+  // Links antigos usavam índice começando em zero (kit-instagram-0). Converte apenas
+  // esse formato não preenchido para o kit correspondente, em vez de cair no primeiro
+  // kit da loja como acontecia antes.
+  const legacy = raw.match(/^kit-instagram-(\d)$/);
+  if (legacy) {
+    const canonical = `kit-instagram-${String(Number(legacy[1]) + 1).padStart(2, "0")}`;
+    if (built.byId.has(canonical)) return canonical;
+  }
+  return undefined;
 }
 
 export function findBundle(id: string | undefined | null): Bundle | undefined {
