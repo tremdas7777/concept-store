@@ -329,7 +329,7 @@ export function ProductsTab({ password }: { password: string }) {
             <Button onClick={() => fileRef.current?.click()}>
               <Upload className="mr-1.5 h-4 w-4" /> Escolher arquivo CSV
             </Button>
-            {catalog?.configured && catalog.products.length === 0 && (
+            {catalog?.configured && !catalog.products.some((p) => p.status === "active") && (
               <Button
                 variant="outline"
                 onClick={() => void send(seedImportProducts())}
