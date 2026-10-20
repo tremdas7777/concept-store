@@ -410,7 +410,7 @@ function legacyKitBundle(p: CatalogProduct, index: number) {
 }
 
 function kitBundle(k: KitDef, products: readonly Bundle[]): Bundle | null {
-  const collection = k.id === "k2calca" || k.id === "k3calca" ? "calcas" : KIT_COLLECTION.id;
+  const collection = k.id === "k2calca" || k.id === "k3calca" || k.id === "kcalcber" ? "calcas" : k.id === "k2berma" ? "bermudas" : KIT_COLLECTION.id;
   const isPantsKit = k.id === "k2calca" || k.id === "k3calca";
   const salePrice = isPantsKit ? r2(k.price * 0.5) : k.price;
   const slots: KitSlot[] = k.slots.map((s) => ({
