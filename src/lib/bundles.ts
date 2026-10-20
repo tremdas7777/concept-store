@@ -219,12 +219,25 @@ function productBundle(p: CatalogProduct, collectionName: (slug: string) => stri
   const sourceVariants = p.variants.length
     ? p.variants
     : [{ values: [], sku: null, price: 0, compareAtPrice: null, stock: null, image: null }];
-  const isPants =
-    p.collections.includes("calcas") || /calça|calca/i.test(`${p.productType ?? ""} ${p.title}`);
+  const searchable = `${p.collections.join(" ")} ${p.productType ?? ""} ${p.title}`
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const isPants = p.collections.includes("calcas") || /calca/.test(searchable);
+  const isSet = /conjunto/.test(searchable);
+  const isSlide = /chinelo|slide/.test(searchable);
+  const isCap = /bone|cap/.test(searchable);
   const originalBase = sourceVariants.reduce((a, b) => (b.price < a.price ? b : a));
-  const variants = sourceVariants.map((v) =>
-    isPants ? { ...v, price: r2(v.price * 0.5), compareAtPrice: v.price } : v,
-  );
+  const variants = sourceVariants.map((v) => {
+    if (isPants) return { ...v, price: r2(v.price * 0.5), compareAtPrice: v.price };
+    if (isSet) {
+      const price = 129.9;
+      return { ...v, price, ...(v.price > price ? { compareAtPrice: v.price } : {}) };
+    }
+    if (isSlide) return { ...v, price: r2(v.price * 0.5), compareAtPrice: v.price };
+    if (isCap) return { ...v, price: r2(v.price * 0.6), compareAtPrice: v.price };
+    return v;
+  });
   const sellable = variants.filter(inStock);
   const base = (sellable.length ? sellable : variants).reduce((a, b) =>
     b.price < a.price ? b : a,
@@ -249,7 +262,7 @@ function productBundle(p: CatalogProduct, collectionName: (slug: string) => stri
     name: p.title,
     tag,
     price: base.price,
-    ...(isPants
+    ...(isPants || isSlide || isCap || (isSet && originalBase.price > base.price)
       ? { compareAtPrice: originalBase.price }
       : base.compareAtPrice && base.compareAtPrice > base.price
         ? { compareAtPrice: base.compareAtPrice }
