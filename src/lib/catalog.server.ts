@@ -20,14 +20,7 @@ const titleKey = (value: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
-const mediaForTitle = (title: string) => {
-  const key = titleKey(title);
-  if (CATALOG_MEDIA_BY_TITLE[key]?.length) return CATALOG_MEDIA_BY_TITLE[key];
-  const match = Object.entries(CATALOG_MEDIA_BY_TITLE).find(
-    ([candidate]) => candidate.startsWith(key) || key.startsWith(candidate),
-  );
-  return match?.[1] ?? [];
-};
+const mediaForTitle = (title: string) => CATALOG_MEDIA_BY_TITLE[titleKey(title)] ?? [];
 
 export function catalogDbConfigured() {
   const url = process.env["SUPABASE_URL"] ?? "";
@@ -40,10 +33,7 @@ const asOptions = (j: unknown): Opt[] =>
     ? j
         .filter(
           (o): o is Opt =>
-            !!o &&
-            typeof (o as Opt).name === "string" &&
-            Array.isArray((o as Opt).values) &&
-            (o as Opt).values.every((v) => typeof v === "string"),
+            !!o && typeof (o as Opt).name === "string" && Array.isArray((o as Opt).values) && (o as Opt).values.every((v) => typeof v === "string"),
         )
         .map((o) => ({ name: o.name, values: o.values }))
     : [];
@@ -66,23 +56,15 @@ async function readDb(): Promise<CatalogData | null> {
   if (!rows.length) return null;
   const slugById = new Map(cols.data.map((c) => [c.id, c.slug]));
   const collections: CatalogCollection[] = cols.data.map((c) => ({ slug: c.slug, name: c.name, description: c.description, image: c.image, sort: c.sort }));
-  const products: CatalogProduct[] = rows.map((p) => ({
-    handle: p.handle, title: p.title, description: p.description, productType: p.product_type, vendor: p.vendor, tags: p.tags ?? [],
-    collections: [...(p.product_collections ?? [])].sort((a, b) => a.position - b.position).map((pc) => slugById.get(pc.collection_id)).filter((s): s is string => !!s),
-    options: asOptions(p.options),
-    variants: [...(p.product_variants ?? [])].sort((a, b) => a.position - b.position).map((v) => ({ values: v.option_values ?? [], sku: v.sku, price: Number(v.price), compareAtPrice: v.compare_at_price === null ? null : Number(v.compare_at_price), stock: v.stock, image: v.image })),
-    images: CATALOG_MEDIA[p.handle]?.length ? CATALOG_MEDIA[p.handle] : mediaForTitle(p.title).length ? mediaForTitle(p.title) : (p.images ?? []).filter((url) => !!url && url !== "/placeholder.svg"),
-    sort: p.sort,
-  }));
+  const products: CatalogProduct[] = rows.map((p) => {
+    const images = CATALOG_MEDIA[p.handle]?.length ? CATALOG_MEDIA[p.handle] : mediaForTitle(p.title).length ? mediaForTitle(p.title) : (p.images ?? []).filter((url) => !!url && url !== "/placeholder.svg");
+    return { handle: p.handle, title: p.title, description: p.description, productType: p.product_type, vendor: p.vendor, tags: p.tags ?? [], collections: [...(p.product_collections ?? [])].sort((a, b) => a.position - b.position).map((pc) => slugById.get(pc.collection_id)).filter((s): s is string => !!s), options: asOptions(p.options), variants: [...(p.product_variants ?? [])].sort((a, b) => a.position - b.position).map((v) => ({ values: v.option_values ?? [], sku: v.sku, price: Number(v.price), compareAtPrice: v.compare_at_price === null ? null : Number(v.compare_at_price), stock: v.stock, image: v.image })), images, sort: p.sort, _hasImage: images.length > 0 } as CatalogProduct & { _hasImage: boolean };
+  }).filter((p) => p._hasImage).map(({ _hasImage, ...p }) => p as CatalogProduct);
   const stamps = [...rows.map((r) => r.updated_at), ...cols.data.map((c) => c.updated_at)].sort();
   return { collections, products, source: "db", version: `db:${products.length}:${stamps.at(-1) ?? ""}` };
 }
 
-type DbProduct = {
-  id: string; handle: string; title: string; description: string; product_type: string | null; vendor: string | null; tags: string[] | null; options: unknown; images: string[] | null; sort: number; updated_at: string;
-  product_variants: { position: number; option_values: string[] | null; sku: string | null; price: number | string; compare_at_price: number | string | null; stock: number | null; image: string | null }[];
-  product_collections: { position: number; collection_id: string }[];
-};
+type DbProduct = { id: string; handle: string; title: string; description: string; product_type: string | null; vendor: string | null; tags: string[] | null; options: unknown; images: string[] | null; sort: number; updated_at: string; product_variants: { position: number; option_values: string[] | null; sku: string | null; price: number | string; compare_at_price: number | string | null; stock: number | null; image: string | null }[]; product_collections: { position: number; collection_id: string }[] };
 
 function withInstagramKits(data: CatalogData): CatalogData {
   const existing = new Set(data.products.map((p) => p.handle));
@@ -94,14 +76,10 @@ function withInstagramKits(data: CatalogData): CatalogData {
 export async function loadCatalog(force = false): Promise<CatalogData> {
   if (!force && cache && Date.now() - cache.at < TTL_MS) return cache.data;
   let data: CatalogData = SEED_CATALOG;
-  if (catalogDbConfigured()) {
-    try { data = (await readDb()) ?? SEED_CATALOG; }
-    catch (e) { console.error("[catalogo] não consegui ler o banco; usando o catálogo inicial:", e); if (cache) data = cache.data; }
-  }
+  if (catalogDbConfigured()) { try { data = (await readDb()) ?? SEED_CATALOG; } catch (e) { console.error("[catalogo] não consegui ler o banco; usando o catálogo inicial:", e); if (cache) data = cache.data; } }
   const enriched = withInstagramKits(data);
   cache = { at: Date.now(), data: enriched };
   return enriched;
 }
-
 export function invalidateCatalog() { cache = null; }
 export async function ensureCatalog() { setCatalogData(await loadCatalog()); }
