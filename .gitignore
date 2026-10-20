@@ -34,3 +34,6 @@ dist-ssr
 # Vercel
 .vercel
 .env.local
+
+# Supabase CLI
+supabase/.temp
