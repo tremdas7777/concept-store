@@ -1,9 +1,5 @@
 import { Check } from "lucide-react";
-import {
-  findBundle,
-  variantKey,
-  type Bundle,
-} from "@/lib/bundles";
+import { findBundle, variantSize, type Bundle } from "@/lib/bundles";
 import { cn } from "@/lib/utils";
 
 const inStock = (v: { stock: number | null }) => v.stock === null || v.stock > 0;
@@ -29,11 +25,19 @@ export function KitPicker({
         const pieceId = values[i * 2];
         const size = values[i * 2 + 1];
         const piece = findBundle(pieceId);
-        const sizes = (piece?.variants ?? []).filter(inStock).map((v) => variantKey(v.values));
+        const sizes = piece
+          ? [...new Set((piece.variants ?? []).filter(inStock).map((v) => variantSize(piece, v)))]
+          : [];
         const done = !!piece && !!size;
         const missing = nudge && !done;
         return (
-          <li key={i} className={cn("border-t pt-4", missing ? "border-[var(--sale)]" : "border-[var(--ink)]")}>
+          <li
+            key={i}
+            className={cn(
+              "border-t pt-4",
+              missing ? "border-[var(--sale)]" : "border-[var(--ink)]",
+            )}
+          >
             <div className="flex items-baseline justify-between gap-3">
               <p className="text-[12px] font-extrabold uppercase tracking-[0.12em]">
                 <span className="mr-2 text-[var(--ink)]/40">{String(i + 1).padStart(2, "0")}</span>
@@ -42,7 +46,11 @@ export function KitPicker({
               <p
                 className={cn(
                   "truncate text-right text-[12.5px]",
-                  done ? "font-semibold text-[var(--ink)]" : missing ? "text-[var(--sale)]" : "text-[var(--ink)]/50",
+                  done
+                    ? "font-semibold text-[var(--ink)]"
+                    : missing
+                      ? "text-[var(--sale)]"
+                      : "text-[var(--ink)]/50",
                 )}
               >
                 {done ? (
@@ -72,19 +80,30 @@ export function KitPicker({
                     onClick={() => {
                       onChange(i * 2, id);
                       // Tamanho que não existe no modelo novo: limpa.
-                      const keys = (p.variants ?? []).filter(inStock).map((v) => variantKey(v.values));
-                      if (size && !keys.includes(size)) onChange(i * 2 + 1, undefined);
-                      if (!size && keys.length === 1) onChange(i * 2 + 1, keys[0]);
+                      const nextSizes = [
+                        ...new Set(
+                          (p.variants ?? []).filter(inStock).map((v) => variantSize(p, v)),
+                        ),
+                      ];
+                      if (size && !nextSizes.includes(size)) onChange(i * 2 + 1, undefined);
+                      if (!size && nextSizes.length === 1) onChange(i * 2 + 1, nextSizes[0]);
                     }}
                     className="w-[68px] shrink-0 text-left md:w-[72px]"
                   >
                     <span
                       className={cn(
                         "block aspect-[3/4] overflow-hidden border-2 bg-[var(--tile)] transition",
-                        on ? "border-[var(--ink)]" : "border-transparent hover:border-[var(--ink)]/30",
+                        on
+                          ? "border-[var(--ink)]"
+                          : "border-transparent hover:border-[var(--ink)]/30",
                       )}
                     >
-                      <img src={p.img} alt="" loading="lazy" className="h-full w-full object-cover" />
+                      <img
+                        src={p.img}
+                        alt=""
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
                     </span>
                     <span
                       className={cn(
@@ -92,7 +111,10 @@ export function KitPicker({
                         on ? "font-bold" : "text-[var(--ink)]/65",
                       )}
                     >
-                      {p.name.replace(/^(Calça|Bermuda|Polo)\s+(Jogador\s+|Jeans\s+|Alfaiataria\s+)*/i, "")}
+                      {p.name.replace(
+                        /^(Calça|Bermuda|Polo)\s+(Jogador\s+|Jeans\s+|Alfaiataria\s+)*/i,
+                        "",
+                      )}
                     </span>
                   </button>
                 );
