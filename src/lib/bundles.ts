@@ -17,6 +17,7 @@ import {
   type CatalogProduct,
   type CatalogVariant,
 } from "./catalog-data";
+import { INSTAGRAM_KITS } from "./instagram-kits";
 
 export type BundleId = string;
 export type CategoryId = string;
@@ -335,7 +336,11 @@ function build(data: CatalogData): Built {
     .sort((a, b) => a.sort - b.sort)
     .map((p) => productBundle(p, colName));
   const kits = KITS.map((k) => kitBundle(k, products)).filter((b): b is Bundle => !!b);
-  const bundles = [...kits, ...products];
+  // Mantém os kits antigos baseados nas fotos do Instagram visíveis na loja. Eles não
+  // têm composição de peças cadastrada, então continuam como kits legados de tamanho único;
+  // os kits estruturados acima são os que permitem escolher modelo e tamanho por peça.
+  const legacyKits = INSTAGRAM_KITS.map((p) => productBundle(p, colName));
+  const bundles = [...kits, ...legacyKits, ...products];
   const used = new Set(products.flatMap((p) => p.collections));
   const categories: Category[] = [
     ...(kits.length ? [KIT_COLLECTION] : []),
