@@ -168,7 +168,7 @@ export const KIT_COLLECTION: Category = {
   id: "kits",
   name: "Kits",
   desc: "Monte o seu kit e pague menos por peça",
-  img: "/produtos/kit-k2calca.webp",
+  img: "/produtos/kit-k2berma.webp",
 };
 
 export const kitModelOption = (i: number) => `Peça ${i + 1}`;
@@ -216,9 +216,15 @@ const sizeRank = (v: string) => {
 };
 
 function productBundle(p: CatalogProduct, collectionName: (slug: string) => string): Bundle {
-  const variants = p.variants.length
+  const sourceVariants = p.variants.length
     ? p.variants
     : [{ values: [], sku: null, price: 0, compareAtPrice: null, stock: null, image: null }];
+  const isPants =
+    p.collections.includes("calcas") || /calça|calca/i.test(`${p.productType ?? ""} ${p.title}`);
+  const originalBase = sourceVariants.reduce((a, b) => (b.price < a.price ? b : a));
+  const variants = sourceVariants.map((v) =>
+    isPants ? { ...v, price: r2(v.price * 0.5), compareAtPrice: v.price } : v,
+  );
   const sellable = variants.filter(inStock);
   const base = (sellable.length ? sellable : variants).reduce((a, b) =>
     b.price < a.price ? b : a,
@@ -243,9 +249,11 @@ function productBundle(p: CatalogProduct, collectionName: (slug: string) => stri
     name: p.title,
     tag,
     price: base.price,
-    ...(base.compareAtPrice && base.compareAtPrice > base.price
-      ? { compareAtPrice: base.compareAtPrice }
-      : {}),
+    ...(isPants
+      ? { compareAtPrice: originalBase.price }
+      : base.compareAtPrice && base.compareAtPrice > base.price
+        ? { compareAtPrice: base.compareAtPrice }
+        : {}),
     img,
     images,
     options: p.options.map((o) =>
@@ -402,6 +410,9 @@ function legacyKitBundle(p: CatalogProduct, index: number) {
 }
 
 function kitBundle(k: KitDef, products: readonly Bundle[]): Bundle | null {
+  const collection = k.id === "k2calca" || k.id === "k3calca" ? "calcas" : KIT_COLLECTION.id;
+  const isPantsKit = k.id === "k2calca" || k.id === "k3calca";
+  const salePrice = isPantsKit ? r2(k.price * 0.5) : k.price;
   const slots: KitSlot[] = k.slots.map((s) => ({
     label: s.label,
     collection: s.collection,
@@ -420,8 +431,12 @@ function kitBundle(k: KitDef, products: readonly Bundle[]): Bundle | null {
     id: k.id,
     name: k.name,
     tag: k.tag,
-    price: k.price,
-    ...(avulso > k.price ? { compareAtPrice: avulso } : {}),
+    price: salePrice,
+    ...(isPantsKit
+      ? { compareAtPrice: k.price }
+      : avulso > k.price
+        ? { compareAtPrice: avulso }
+        : {}),
     img: cover,
     images: [cover, ...pieces.slice(0, 6).map((p) => p.img)],
     options: slots.flatMap((slot, i) => {
@@ -436,12 +451,12 @@ function kitBundle(k: KitDef, products: readonly Bundle[]): Bundle | null {
     }),
     kit: slots,
     benefits: [
-      `${slots.length} peças por ${brl(k.price)}`,
+      `${slots.length} peças por ${brl(salePrice)}`,
       "Você escolhe o modelo e o tamanho de cada peça",
       "Pode repetir o mesmo modelo em tamanhos diferentes",
     ],
-    category: KIT_COLLECTION.id,
-    collections: [KIT_COLLECTION.id],
+    category: collection,
+    collections: [collection],
     ...(k.badge ? { badge: k.badge } : {}),
     description: [
       `No ${k.name} você monta o kit do seu jeito: escolhe o modelo e o tamanho de cada peça e paga um preço fechado, menor do que comprando separado.`,
@@ -486,7 +501,10 @@ function build(data: CatalogData): Built {
   const legacyKits = legacy.map((x) => x.kit);
   const virtualPieces = legacy.flatMap((x) => x.pieces);
   const bundles = [...kits, ...legacyKits, ...products, ...virtualPieces];
-  const used = new Set(products.flatMap((p) => p.collections));
+  const used = new Set([
+    ...products.flatMap((p) => p.collections),
+    ...kits.flatMap((p) => p.collections),
+  ]);
   const categories: Category[] = [
     ...(kits.length ? [KIT_COLLECTION] : []),
     ...cols
