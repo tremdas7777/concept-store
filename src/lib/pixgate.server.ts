@@ -8,6 +8,11 @@ const KEY = "pixgate_api_key";
 const CACHE_MS = 60_000;
 let cache: { value: string | null; at: number } | null = null;
 
+function normalizeKey(value: string | null | undefined): string | null {
+  const key = value?.trim().replace(/^Bearer\s+/i, "").trim();
+  return key || null;
+}
+
 async function db() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
@@ -28,7 +33,7 @@ async function savedKey(): Promise<string | null> {
 /** Chave em uso: a do /admin ou, sem ela, o secret do Lovable. */
 export async function getPixgateKey(): Promise<string | null> {
   if (cache && Date.now() - cache.at < CACHE_MS) return cache.value;
-  const value = (await savedKey()) || process.env["PIXGATE_API_KEY"] || null;
+  const value = normalizeKey((await savedKey()) || process.env["PIXGATE_API_KEY"]);
   cache = { value, at: Date.now() };
   return value;
 }
@@ -38,18 +43,20 @@ export async function getPixgateKeySource(): Promise<{
   key: string | null;
   source: "admin" | "secret" | null;
 }> {
-  const saved = await savedKey();
+  const saved = normalizeKey(await savedKey());
   if (saved) return { key: saved, source: "admin" };
-  const env = process.env["PIXGATE_API_KEY"] || null;
+  const env = normalizeKey(process.env["PIXGATE_API_KEY"]);
   return { key: env, source: env ? "secret" : null };
 }
 
 export async function savePixgateKey(value: string): Promise<void> {
+  const normalized = normalizeKey(value);
+  if (!normalized) throw new Error("A chave Pixgate não pode estar vazia.");
   const { error } = await (
     await db()
   )
     .from("private_settings")
-    .upsert({ key: KEY, value, updated_at: new Date().toISOString() });
+    .upsert({ key: KEY, value: normalized, updated_at: new Date().toISOString() });
   if (error) throw new Error(error.message);
   cache = null;
 }
