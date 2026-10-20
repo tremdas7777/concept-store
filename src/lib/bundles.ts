@@ -473,7 +473,13 @@ function build(data: CatalogData): Built {
     .sort((a, b) => a.sort - b.sort)
     .map((p) => productBundle(p, colName));
   const kits = KITS.map((k) => kitBundle(k, products)).filter((b): b is Bundle => !!b);
-  const hiddenLegacyKits = new Set(["kit-instagram-02", "kit-instagram-10", "kit-instagram-14"]);
+  const hiddenLegacyKits = new Set([
+    "kit-instagram-02",
+    "kit-instagram-10",
+    "kit-instagram-14",
+    "kit-instagram-16",
+    "kit-instagram-20",
+  ]);
   const legacy = INSTAGRAM_KITS.map((p, index) => legacyKitBundle(p, index)).filter(
     (x) => !hiddenLegacyKits.has(x.kit.id),
   );
