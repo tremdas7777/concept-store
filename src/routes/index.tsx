@@ -38,18 +38,18 @@ const linkClass = "block h-full w-full";
 
 const BANNERS: Banner[] = [
   {
-    key: "kit-calcas",
-    alt: "Kit calças jogador: escolha os modelos e pague menos por peça",
+    key: "kits",
+    alt: "Monte seu kit: calça, bermuda, alfaiataria e tricô, a partir de 2 peças",
     mobile: "/banners/hero-kit-m.webp",
     desktop: "/banners/hero-kit-d.webp",
-    to: { produto: "k2calca" },
+    to: { colecao: "kits" },
   },
   {
-    key: "jeans",
-    alt: "Calças jogador em jeans, do claro ao black",
-    mobile: "/banners/hero-jeans-m.webp",
-    desktop: "/banners/hero-jeans-d.webp",
-    to: { colecao: "calcas" },
+    key: "bermudas",
+    alt: "Bermudas jeans jogador, lisas e destroyed, feitas pro calor",
+    mobile: "/banners/hero-bermudas-m.webp",
+    desktop: "/banners/hero-bermudas-d.webp",
+    to: { colecao: "bermudas" },
   },
   {
     key: "alfaiataria",
