@@ -25,12 +25,12 @@ const posts = [
 
 export const INSTAGRAM_KITS: CatalogProduct[] = posts.map((post, index) => ({
   handle: `kit-instagram-${String(index + 1).padStart(2, "0")}`,
-  title: `Kit Brownstore ${String(index + 1).padStart(2, "0")}`,
+  title: `Kit Norte Concept ${index + 1}`,
   description:
-    "Kit selecionado a partir de uma publicação pública do Instagram da Brownstore. Consulte disponibilidade e tamanhos antes de finalizar o pedido.",
+    "Kit exclusivo Norte Concept. Escolha as peças e os tamanhos disponíveis antes de finalizar o pedido.",
   productType: "Kit",
-  vendor: "Brownstore",
-  tags: ["kit", "instagram", "brownstore"],
+  vendor: "Norte Concept",
+  tags: ["kit", "norte-concept"],
   collections: ["kits"],
   options: [{ name: "Tamanho", values: ["Único"] }],
   variants: [
