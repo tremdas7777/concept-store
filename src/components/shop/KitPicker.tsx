@@ -66,60 +66,62 @@ export function KitPicker({
               </p>
             </div>
 
-            <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden">
-              {slot.pool.map((id) => {
-                const p = findBundle(id);
-                if (!p) return null;
-                const on = id === pieceId;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    aria-pressed={on}
-                    title={p.name}
-                    onClick={() => {
-                      onChange(i * 2, id);
-                      // Tamanho que não existe no modelo novo: limpa.
-                      const nextSizes = [
-                        ...new Set(
-                          (p.variants ?? []).filter(inStock).map((v) => variantSize(p, v)),
-                        ),
-                      ];
-                      if (size && !nextSizes.includes(size)) onChange(i * 2 + 1, undefined);
-                      if (!size && nextSizes.length === 1) onChange(i * 2 + 1, nextSizes[0]);
-                    }}
-                    className="w-[68px] shrink-0 text-left md:w-[72px]"
-                  >
-                    <span
-                      className={cn(
-                        "block aspect-[3/4] overflow-hidden border-2 bg-[var(--tile)] transition",
-                        on
-                          ? "border-[var(--ink)]"
-                          : "border-transparent hover:border-[var(--ink)]/30",
-                      )}
+            {slot.pool.length > 1 && (
+              <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden">
+                {slot.pool.map((id) => {
+                  const p = findBundle(id);
+                  if (!p) return null;
+                  const on = id === pieceId;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={on}
+                      title={p.name}
+                      onClick={() => {
+                        onChange(i * 2, id);
+                        // Tamanho que não existe no modelo novo: limpa.
+                        const nextSizes = [
+                          ...new Set(
+                            (p.variants ?? []).filter(inStock).map((v) => variantSize(p, v)),
+                          ),
+                        ];
+                        if (size && !nextSizes.includes(size)) onChange(i * 2 + 1, undefined);
+                        if (!size && nextSizes.length === 1) onChange(i * 2 + 1, nextSizes[0]);
+                      }}
+                      className="w-[68px] shrink-0 text-left md:w-[72px]"
                     >
-                      <img
-                        src={p.img}
-                        alt=""
-                        loading="lazy"
-                        className="h-full w-full object-cover"
-                      />
-                    </span>
-                    <span
-                      className={cn(
-                        "mt-1 line-clamp-2 text-[10.5px] leading-tight",
-                        on ? "font-bold" : "text-[var(--ink)]/65",
-                      )}
-                    >
-                      {p.name.replace(
-                        /^(Calça|Bermuda|Polo)\s+(Jogador\s+|Jeans\s+|Alfaiataria\s+)*/i,
-                        "",
-                      )}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                      <span
+                        className={cn(
+                          "block aspect-[3/4] overflow-hidden border-2 bg-[var(--tile)] transition",
+                          on
+                            ? "border-[var(--ink)]"
+                            : "border-transparent hover:border-[var(--ink)]/30",
+                        )}
+                      >
+                        <img
+                          src={p.img}
+                          alt=""
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                        />
+                      </span>
+                      <span
+                        className={cn(
+                          "mt-1 line-clamp-2 text-[10.5px] leading-tight",
+                          on ? "font-bold" : "text-[var(--ink)]/65",
+                        )}
+                      >
+                        {p.name.replace(
+                          /^(Calça|Bermuda|Polo)\s+(Jogador\s+|Jeans\s+|Alfaiataria\s+)*/i,
+                          "",
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="mt-3 flex flex-wrap gap-1.5">
               {piece ? (
@@ -142,11 +144,11 @@ export function KitPicker({
                     </button>
                   );
                 })
-              ) : (
+              ) : slot.pool.length > 1 ? (
                 <p className="text-[12.5px] text-[var(--ink)]/50">
                   Toque no modelo para ver os tamanhos.
                 </p>
-              )}
+              ) : null}
             </div>
           </li>
         );
