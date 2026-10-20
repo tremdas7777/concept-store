@@ -121,12 +121,15 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: clip;
   }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-weight: 400;
+    max-width: 100%;
+    overflow-x: clip;
   }
   ::selection {
     background: var(--ink);
