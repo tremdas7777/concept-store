@@ -168,7 +168,7 @@ export const KIT_COLLECTION: Category = {
   id: "kits",
   name: "Kits",
   desc: "Monte o seu kit e pague menos por peça",
-  img: "/produtos/calca-jogador-basic-jeans-1.webp",
+  img: "/produtos/berma-jogador-city-cinza-esx-1.webp",
 };
 
 export const kitModelOption = (i: number) => `Peça ${i + 1}`;
