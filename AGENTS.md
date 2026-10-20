@@ -1,10 +1,7 @@
-<!-- LOVABLE:BEGIN -->
 > [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
+> Este projeto é hospedado na Vercel (projeto `concept-store`, conta tremdas7777) a partir do
+> repositório GitHub `tremdas7777/concept-store`, branch `main`. Não reescreva histórico já
+> enviado (force push, rebase/amend/squash de commits publicados).
 >
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
-<!-- LOVABLE:END -->
+> Build: `NITRO_PRESET=vercel` é detectado sozinho na Vercel (saída em `.vercel/output`).
+> Mantenha a branch `main` sempre funcionando: cada push publica o site.

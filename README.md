@@ -4,7 +4,8 @@ Loja de moda masculina focada em kits: calças jogador, bermudas, alfaiataria e 
 checkout próprio (Pix + cartão), painel admin, importador de produtos CSV e integrações de
 rastreio e marketing.
 
-Push na branch `main` do GitHub sincroniza com o Lovable.
+Hospedada na Vercel: https://concept-store-six.vercel.app (repositório `tremdas7777/concept-store`).
+Publicar de novo: `npx vercel deploy --prod` (ou, com o GitHub ligado à Vercel, um push na `main`).
 
 ## O que tem na loja
 
@@ -30,9 +31,9 @@ Push na branch `main` do GitHub sincroniza com o Lovable.
 
 ## Antes de vender — o que configurar
 
-1. **Supabase**: conecte o Lovable Cloud (ou um projeto Supabase), rode `supabase/migrations/`
-   e preencha o `.env` (hoje com valores de exemplo) e o `project_id` em `supabase/config.toml`.
-2. **Segredos do servidor** (variáveis secretas do Lovable/Cloudflare — **nunca** no `.env`):
+1. **Supabase**: crie um projeto em supabase.com, rode os arquivos de `supabase/migrations/` (SQL
+   Editor) e preencha o `.env` (hoje com valores de exemplo) e o `project_id` em `supabase/config.toml`.
+2. **Segredos do servidor** (Vercel → Settings → Environment Variables — **nunca** no `.env`):
    `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD` e as chaves dos gateways/rastreio que usar.
 3. **Nome e dados da empresa**: `src/lib/brand.ts` (nome provisório, CNPJ, e-mail, WhatsApp,
    Instagram, cidade). O logo do site é o próprio nome; favicon e `og-image.jpg` foram gerados
